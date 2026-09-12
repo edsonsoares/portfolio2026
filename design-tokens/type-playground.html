@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Type Playground</title>
+<script src="typography.config.js"></script>
+<script src="generate-css.js"></script>
+<style id="tokens"></style>
+<style>
+  /* ---------- Playground chrome (deliberately independent of the tokens) ---------- */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: #1d1d1f;
+    background: #ececef;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+
+  .pg-app { display: grid; grid-template-columns: 380px 1fr; height: 100%; }
+
+  .pg-panel {
+    display: flex; flex-direction: column;
+    background: #fff; border-right: 1px solid #d9d9de;
+    min-height: 0;
+  }
+  .pg-panel header { padding: 16px 18px 12px; border-bottom: 1px solid #ececef; }
+  .pg-panel h1 { font-size: 15px; margin: 0 0 10px; }
+  .pg-stepnav { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pg-stepnav button {
+    border: 1px solid #d9d9de; background: #f6f6f8; border-radius: 6px;
+    padding: 4px 8px; cursor: pointer; font-size: 12px;
+  }
+  .pg-stepnav button[aria-current="step"] { background: #1d1d1f; border-color: #1d1d1f; color: #fff; }
+
+  .pg-step { flex: 1; overflow-y: auto; padding: 16px 18px 24px; }
+  .pg-step h2 { font-size: 14px; margin: 0 0 4px; }
+  .pg-hint { color: #6e6e73; margin: 0 0 16px; }
+  .pg-hint b { color: #1d1d1f; font-weight: 600; }
+  .pg-group { margin: 0 0 18px; }
+  .pg-group-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: #6e6e73; margin: 0 0 8px; font-weight: 600;
+  }
+
+  .pg-row { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .pg-row > label { color: #3a3a3c; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pg-control { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .pg-control input[type="range"] { flex: 1; min-width: 0; accent-color: #1d1d1f; }
+  .pg-control input[type="number"] { width: 70px; }
+  .pg-control input[type="text"] { flex: 1; min-width: 0; }
+  .pg-control select { flex: 1; min-width: 0; }
+  .pg-control input, .pg-control select {
+    border: 1px solid #d9d9de; border-radius: 6px; padding: 4px 6px; background: #fff;
+  }
+  .pg-note { color: #6e6e73; font-size: 12px; margin: 4px 0 0 102px; }
+  .pg-note.ok { color: #1f7a3a; }
+  .pg-note.warn { color: #b25000; }
+
+  .pg-panel footer {
+    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    padding: 12px 18px; border-top: 1px solid #ececef;
+  }
+  .pg-btn {
+    border: 1px solid #d9d9de; background: #fff; border-radius: 6px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .pg-btn.primary { background: #1d1d1f; border-color: #1d1d1f; color: #fff; }
+  .pg-btn:disabled { opacity: 0.4; cursor: default; }
+  .pg-spacer { flex: 1; }
+  .pg-dirty { font-size: 11px; color: #b25000; }
+
+  .pg-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .pg-toolbar {
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    padding: 10px 18px; background: #f6f6f8; border-bottom: 1px solid #d9d9de;
+  }
+  .pg-tabs { display: flex; gap: 2px; background: #e3e3e8; padding: 2px; border-radius: 7px; }
+  .pg-tabs button { border: 0; background: transparent; padding: 4px 10px; border-radius: 5px; cursor: pointer; }
+  .pg-tabs button[aria-selected="true"] { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .pg-toolbar label { display: flex; gap: 6px; align-items: center; color: #3a3a3c; }
+  .pg-toolbar output { font-variant-numeric: tabular-nums; color: #6e6e73; min-width: 56px; }
+
+  .pg-stage { flex: 1; overflow: auto; padding: 24px; }
+  .pg-frame {
+    container-type: inline-size;
+    width: 100%; margin: 0 auto;
+    background: var(--pv-bg); color: var(--pv-fg);
+    border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    --pv-bg: #ffffff; --pv-fg: #16161a; --pv-muted: #5c5c66; --pv-line: #e4e4ea; --pv-soft: #f3f3f6; --pv-accent: #2f5bea;
+  }
+  .pg-frame.dark {
+    --pv-bg: #141417; --pv-fg: #ededf0; --pv-muted: #9d9da8; --pv-line: #2c2c33; --pv-soft: #1e1e23; --pv-accent: #8aa4ff;
+  }
+
+  /* ---------- Preview content (uses the tokens) ---------- */
+  .pv { padding: clamp(20px, 5cqi, 56px); }
+  .pv * { margin: 0; }
+  [contenteditable] { outline: none; }
+  [contenteditable]:focus { box-shadow: 0 0 0 2px var(--pv-accent); border-radius: 2px; }
+
+  .pv-specimen { display: grid; gap: 0; }
+  .pv-spec-row {
+    display: grid; grid-template-columns: 170px 1fr; gap: 24px;
+    padding: 20px 0; border-bottom: 1px solid var(--pv-line); align-items: baseline;
+  }
+  .pv-spec-row:first-child { padding-top: 0; }
+  .pv-spec-row:last-child { border-bottom: 0; }
+  .pv-meta { font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--pv-muted); }
+  .pv-meta strong { display: block; color: var(--pv-fg); font-weight: 600; }
+  @container (max-width: 560px) {
+    .pv-spec-row { grid-template-columns: 1fr; gap: 6px; }
+  }
+
+  .pv-ladder-row {
+    display: grid; grid-template-columns: 170px 1fr; gap: 24px; align-items: baseline;
+    padding: 12px 0; border-bottom: 1px solid var(--pv-line);
+  }
+  .pv-ladder-row:last-child { border-bottom: 0; }
+  .pv-ladder-sample { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font-family-sans); line-height: 1.2; }
+  @container (max-width: 560px) {
+    .pv-ladder-row { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  .pv-context { display: grid; gap: clamp(40px, 8cqi, 96px); }
+  .pv-hero { display: grid; gap: 20px; }
+  .pv-hero .text-display { max-width: 16ch; }
+  .pv-hero .text-body-lg { max-width: var(--measure); color: var(--pv-muted); }
+  .pv-eyebrow { color: var(--pv-accent); }
+  .pv-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .pv-button {
+    display: inline-block; padding: 0.85em 1.3em; border-radius: 999px;
+    background: var(--pv-fg); color: var(--pv-bg);
+  }
+  .pv-button.ghost { background: transparent; color: var(--pv-fg); box-shadow: inset 0 0 0 1px var(--pv-line); }
+
+  .pv-article { display: grid; gap: 1em; max-width: var(--measure); }
+  .pv-article > .text-heading-lg { margin-bottom: 0.1em; }
+  .pv-article > .text-heading-md { margin-top: 1.2em; }
+  .pv-article > .text-heading-sm { margin-top: 0.8em; }
+  .pv-byline { color: var(--pv-muted); }
+  .pv-figure { display: grid; gap: 10px; margin: 0.8em 0; }
+  .pv-figure-img {
+    aspect-ratio: 16 / 9; max-width: 100%; border-radius: 8px;
+    background: linear-gradient(135deg, var(--pv-soft), var(--pv-line));
+  }
+  .pv-figure figcaption { color: var(--pv-muted); }
+  .pv-code { background: var(--pv-soft); padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; }
+  .pv-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .pv-card { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--pv-line); border-radius: 10px; align-content: start; }
+  .pv-card .text-body-sm { color: var(--pv-muted); }
+  .pv-footnote { color: var(--pv-muted); border-top: 1px solid var(--pv-line); padding-top: 1em; }
+
+  dialog { border: 0; border-radius: 12px; padding: 0; width: min(760px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .pg-dialog-head { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #ececef; }
+  .pg-dialog-body { padding: 12px 16px 16px; }
+  .pg-dialog-body p { margin: 0 0 8px; color: #6e6e73; }
+  .pg-dialog-body code { background: #f3f3f6; padding: 1px 4px; border-radius: 4px; }
+  dialog textarea {
+    width: 100%; height: 50vh; resize: vertical; border: 1px solid #d9d9de; border-radius: 8px;
+    padding: 10px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (max-width: 900px) {
+    .pg-app { grid-template-columns: 1fr; height: auto; }
+    .pg-panel { border-right: 0; border-bottom: 1px solid #d9d9de; }
+    .pg-step { max-height: 55vh; }
+    .pg-stage { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="pg-app">
+  <aside class="pg-panel">
+    <header>
+      <h1>Type Playground</h1>
+      <nav class="pg-stepnav" id="stepnav" aria-label="Steps"></nav>
+    </header>
+    <section class="pg-step" id="step"></section>
+    <footer>
+      <button class="pg-btn" id="prev">← Back</button>
+      <button class="pg-btn primary" id="next">Next →</button>
+      <span class="pg-spacer"></span>
+      <span class="pg-dirty" id="dirty" hidden>Edited</span>
+      <button class="pg-btn" id="reset" title="Discard edits and reload values from typography.config.js">Reset</button>
+      <button class="pg-btn" id="export">Export</button>
+    </footer>
+  </aside>
+
+  <main class="pg-main">
+    <div class="pg-toolbar">
+      <div class="pg-tabs" role="tablist" id="tabs">
+        <button role="tab" data-tab="specimen">Specimen</button>
+        <button role="tab" data-tab="context">In context</button>
+        <button role="tab" data-tab="scale">Scale</button>
+      </div>
+      <label>Width
+        <input type="range" id="width" min="320" max="1600" step="10">
+        <output id="widthOut"></output>
+      </label>
+      <label><input type="checkbox" id="fit"> Fit</label>
+      <label><input type="checkbox" id="dark"> Dark</label>
+    </div>
+    <div class="pg-stage">
+      <div class="pg-frame" id="frame">
+        <div class="pv" id="preview"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<dialog id="exportDialog">
+  <div class="pg-dialog-head">
+    <div class="pg-tabs" id="exportTabs">
+      <button data-export="config" aria-selected="true">typography.config.js</button>
+      <button data-export="css">typography.css</button>
+    </div>
+    <span class="pg-spacer"></span>
+    <button class="pg-btn primary" id="copy">Copy</button>
+    <button class="pg-btn" id="closeExport">Close</button>
+  </div>
+  <div class="pg-dialog-body">
+    <p id="exportHint"></p>
+    <textarea id="exportText" readonly spellcheck="false"></textarea>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  // Bumped because mergeKnown used to turn saved `faces` arrays into plain objects
+  // ({0: …, 1: …}), breaking step 3 and font-face generation after a reload.
+  const STORAGE_KEY = "type-playground:v3";
+  const DEFAULTS = structuredClone(TYPE_CONFIG);
+  const ROLES = Object.keys(DEFAULTS.roles);
+
+  const RATIOS = [
+    [1.067, "Minor second"], [1.125, "Major second"], [1.2, "Minor third"], [1.25, "Major third"],
+    [1.333, "Perfect fourth"], [1.414, "Augmented fourth"], [1.5, "Perfect fifth"], [1.618, "Golden ratio"],
+  ];
+
+  const SAMPLES = {
+    display: "Calm interfaces for complex science",
+    "display-editorial": "The quiet architecture of trust",
+    "heading-lg": "Designing for how people actually feel",
+    "heading-md": "What the research tells us",
+    "heading-sm": "Methods and participants",
+    "body-lg": "A short introduction that sets up the story and invites the reader to keep going.",
+    body: "Body copy carries most of the reading. It needs a comfortable size, generous line height and a measure that keeps lines from running too long. Ação, coração, 38 °C, ±0.5 µg, H₂O, 10⁶.",
+    prose: [
+      "Long-form reading text favors a serif at a relaxed line height, so paragraphs stay comfortable across a wide measure. ",
+      h("em", {}, "This sentence is set in italic to check the serif's italic face."),
+      " The rest returns to upright text so the two can be compared side by side.",
+    ],
+    "body-sm": "Secondary information, metadata and supporting details — 12 min read · Sep 2026.",
+    caption: "Figure 2. Heart-rate variability across participants (n = 48, p < 0.05).",
+    label: "Read case study",
+    mono: "const hrv = rmssd(intervals); // 42.7 ms",
+  };
+
+  // ---------- state ----------
+  const store = {
+    get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+    set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} },
+  };
+
+  // Only keep stored values whose keys still exist in the config file.
+  function mergeKnown(defaults, saved) {
+    if (Array.isArray(defaults)) return Array.isArray(saved) ? saved : structuredClone(defaults);
+    if (saved === null || typeof saved !== typeof defaults) return structuredClone(defaults);
+    if (typeof defaults !== "object") return saved;
+    const result = {};
+    for (const key of Object.keys(defaults)) result[key] = mergeKnown(defaults[key], saved[key]);
+    return result;
+  }
+
+  const saved = store.get(STORAGE_KEY) || {};
+  let config = mergeKnown(DEFAULTS, saved.config ?? null);
+  // Font files and families are static assets from typography.config.js — never let a
+  // stale/edited copy from localStorage shadow them.
+  config.fonts = structuredClone(DEFAULTS.fonts);
+  const ui = {
+    step: saved.ui?.step ?? 0,
+    tab: saved.ui?.tab ?? "scale",
+    width: saved.ui?.width ?? 1100,
+    fit: saved.ui?.fit ?? true,
+    dark: saved.ui?.dark ?? false,
+  };
+  const $ = (id) => document.getElementById(id);
+  function h(tag, props = {}, ...children) {
+    const node = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+      else if (k === "class") node.className = v;
+      else if (v !== undefined && v !== null && v !== false) node.setAttribute(k, v);
+    }
+    node.append(...children.flat().filter((c) => c !== null && c !== undefined));
+    return node;
+  }
+
+  // ---------- controls ----------
+  let uid = 0;
+  function row(label, control) {
+    const id = `f${++uid}`;
+    const first = control.querySelector("input, select");
+    if (first) first.id = id;
+    return h("div", { class: "pg-row" }, h("label", { for: id, title: label }, label), control);
+  }
+
+  function slider(value, { min, max, step }, onChange) {
+    const range = h("input", { type: "range", min, max, step, value });
+    const num = h("input", { type: "number", min, max, step, value });
+    const commit = (v, from) => {
+      if (v === "" || Number.isNaN(Number(v))) return;
+      if (from !== range) range.value = v;
+      if (from !== num) num.value = v;
+      onChange(Number(v));
+    };
+    range.addEventListener("input", () => commit(range.value, range));
+    num.addEventListener("input", () => commit(num.value, num));
+    return h("div", { class: "pg-control" }, range, num);
+  }
+
+  function number(value, attrs, onChange) {
+    return h("div", { class: "pg-control" },
+      h("input", { type: "number", value, ...attrs, oninput: (e) => e.target.value !== "" && onChange(Number(e.target.value)) }));
+  }
+
+  function text(value, placeholder, onChange) {
+    return h("div", { class: "pg-control" },
+      h("input", { type: "text", value, placeholder, oninput: (e) => onChange(e.target.value) }));
+  }
+
+  function select(value, options, onChange) {
+    const sel = h("select", { onchange: (e) => onChange(e.target.value) },
+      options.map(([v, label]) => h("option", { value: v, selected: String(v) === String(value) }, label)));
+    return h("div", { class: "pg-control" }, sel);
+  }
+
+  function checkbox(checked, onChange) {
+    return h("div", { class: "pg-control" },
+      h("input", { type: "checkbox", checked, onchange: (e) => onChange(e.target.checked) }));
+  }
+
+  function ratioControl(value, onChange) {
+    const wrap = slider(value, { min: 1, max: 1.8, step: 0.001 }, onChange);
+    const sel = h("select", {
+      onchange: (e) => {
+        if (!e.target.value) return;
+        wrap.querySelectorAll("input").forEach((i) => (i.value = e.target.value));
+        onChange(Number(e.target.value));
+      },
+    }, h("option", { value: "" }, "Presets…"), RATIOS.map(([r, name]) => h("option", { value: r }, `${r} · ${name}`)));
+    wrap.querySelector("input[type=range]").replaceWith(sel);
+    return wrap;
+  }
+
+  const px = (n) => `${Number(n.toFixed(2))}px`;
+  const group = (title, ...rows) => h("div", { class: "pg-group" }, h("p", { class: "pg-group-title" }, title), ...rows);
+  const roleRows = (build) => ROLES.map((name) => row(name, build(config.roles[name], name)));
+
+  // ---------- steps ----------
+  const STEPS = [
+    {
+      title: "1 · Scale",
+      tab: "scale",
+      hint: "Pick a <b>base size</b> for body text and a <b>ratio</b> between steps. Small ratios (1.125–1.2) suit dense, reading-heavy UIs; larger ones (1.25–1.333) give more dramatic headings.",
+      render: () => [
+        group("Scale",
+          row("Base (px)", slider(config.scale.base, { min: 12, max: 24, step: 0.5 }, (v) => update(() => (config.scale.base = v)))),
+          row("Ratio", ratioControl(config.scale.ratio, (v) => update(() => (config.scale.ratio = v))))),
+      ],
+    },
+    {
+      title: "2 · Mapping",
+      tab: "specimen",
+      hint: "Assign each role to a step on the scale. Roles can share a step and still differ through weight, line height or case.",
+      render: () => [
+        group("Step per role",
+          ...roleRows((role) => select(role.step,
+            SCALE_STEPS.map((s) => [s, `${s > 0 ? "+" : ""}${s}  ·  ${px(stepPx(config, s).max)}`]),
+            (v) => update(() => (role.step = Number(v)))))),
+      ],
+    },
+    {
+      title: "3 · Fonts & weight",
+      tab: "specimen",
+      hint: "Faces load automatically from <b>design-tokens/fonts/</b>, as listed in typography.config.js. Static fonts are limited to their available weights; variable fonts allow any weight in their range.",
+      render: () => [
+        ...["sans", "mono", "serif"].map((slot) => group(`${slot} font`,
+          row("Family", text(config.fonts[slot].family, "e.g. Inter", (v) => update(() => (config.fonts[slot].family = v.trim())))),
+          ...facesList(slot))),
+        group("Weight per role",
+          ...roleRows((role) => {
+            const range = weightRangeOf(role.font);
+            return range
+              ? slider(role.weight, { min: range[0], max: range[1], step: 1 }, (v) => update(() => (role.weight = v)))
+              : select(role.weight, weightsFor(role.font).map((w) => [w, w]), (v) => update(() => (role.weight = Number(v))));
+          })),
+        group("Font per role",
+          ...roleRows((role) => select(role.font, [["sans", "sans"], ["mono", "mono"], ["serif", "serif"]], (v) => update(() => {
+            role.font = v;
+            const range = weightRangeOf(v);
+            if (range) {
+              role.weight = Math.min(Math.max(role.weight, range[0]), range[1]);
+            } else {
+              const avail = weightsFor(v);
+              if (!avail.includes(role.weight)) role.weight = nearestWeight(avail, role.weight);
+            }
+          })))),
+      ],
+    },
+    {
+      title: "4 · Line height",
+      tab: "context",
+      hint: "Headings usually want tight line height (1.05–1.25); body text needs more (1.45–1.7). <b>Measure</b> caps the line length of running text.",
+      render: () => [
+        group("Line height per role",
+          ...roleRows((role) => slider(role.lineHeight, { min: 0.9, max: 2, step: 0.05 }, (v) => update(() => (role.lineHeight = v))))),
+        group("Measure",
+          row("Max width (ch)", slider(parseFloat(config.measure), { min: 40, max: 90, step: 1 }, (v) => update(() => (config.measure = `${v}ch`))))),
+      ],
+    },
+    {
+      title: "5 · Letter spacing",
+      tab: "specimen",
+      hint: "Large type usually looks better slightly tightened (negative em). Small uppercase labels need positive tracking to stay legible.",
+      render: () => [
+        group("Tracking per role (em)",
+          ...roleRows((role) => slider(role.tracking, { min: -0.06, max: 0.2, step: 0.005 }, (v) => update(() => (role.tracking = v))))),
+        group("Case",
+          ...roleRows((role) => select(role.transform,
+            [["none", "none"], ["uppercase", "UPPERCASE"], ["lowercase", "lowercase"], ["capitalize", "Capitalize"]],
+            (v) => update(() => (role.transform = v))))),
+      ],
+    },
+    {
+      title: "6 · Responsive",
+      tab: "context",
+      hint: "Turn on fluid sizing so large steps shrink on small screens while body text barely changes. Drag the <b>Width</b> slider above the preview to test.",
+      render: () => {
+        const f = config.scale.fluid;
+        return [
+          group("Fluid type",
+            row("Enabled", checkbox(f.enabled, (v) => update(() => (f.enabled = v))))),
+          group(`Mobile (at ${f.minViewport}px and below)`,
+            row("Viewport", number(f.minViewport, { min: 240, max: 900, step: 10 }, (v) => update(() => (f.minViewport = v)))),
+            row("Base (px)", slider(f.minBase, { min: 12, max: 24, step: 0.5 }, (v) => update(() => (f.minBase = v)))),
+            row("Ratio", ratioControl(f.minRatio, (v) => update(() => (f.minRatio = v))))),
+          group(`Desktop (at ${f.maxViewport}px and above)`,
+            row("Viewport", number(f.maxViewport, { min: 600, max: 2400, step: 10 }, (v) => update(() => (f.maxViewport = v)))),
+            h("p", { class: "pg-note" }, `Base ${config.scale.base}px × ratio ${config.scale.ratio} (set in step 1)`)),
+        ];
+      },
+    },
+  ];
+
+  function renderStep() {
+    const step = STEPS[ui.step];
+    $("stepnav").replaceChildren(...STEPS.map((s, i) =>
+      h("button", { "aria-current": i === ui.step ? "step" : null, onclick: () => goTo(i) }, s.title)));
+    $("step").replaceChildren(
+      h("h2", {}, step.title.replace(/^\d+ · /, "")),
+      Object.assign(h("p", { class: "pg-hint" }), { innerHTML: step.hint }),
+      ...step.render());
+    $("step").scrollTop = 0;
+    $("prev").disabled = ui.step === 0;
+    $("next").disabled = ui.step === STEPS.length - 1;
+  }
+
+  function goTo(i) {
+    ui.step = i;
+    ui.tab = STEPS[i].tab;
+    renderStep();
+    renderPreview();
+    persist();
+  }
+
+  // ---------- fonts ----------
+  // Static faces declared in typography.config.js. Status is keyed by "slot:src".
+  const faceStatus = {};
+  const faceKey = (slot, face) => `${slot}:${face.src}`;
+
+  function facesOf(slot) {
+    return config.fonts[slot].faces || [];
+  }
+
+  function weightsFor(slot) {
+    const faces = facesOf(slot);
+    if (faces.length) return [...new Set(faces.map((f) => f.weight))].sort((a, b) => a - b);
+    return [100, 200, 300, 400, 500, 600, 700, 800, 900];
+  }
+
+  function nearestWeight(available, target) {
+    return available.reduce((best, w) => (Math.abs(w - target) < Math.abs(best - target) ? w : best), available[0]);
+  }
+
+  // Faces with a "min max" weight string (variable fonts) return [min, max]; static faces return null.
+  function weightRangeOf(slot) {
+    for (const face of facesOf(slot)) {
+      if (typeof face.weight === "string" && face.weight.trim().includes(" ")) {
+        const [min, max] = face.weight.trim().split(/\s+/).map(Number);
+        return [min, max];
+      }
+    }
+    return null;
+  }
+
+  // A single weight usable in a font shorthand string, even for a "min max" range face.
+  function checkWeightOf(face) {
+    return typeof face.weight === "string" ? face.weight.trim().split(/\s+/)[0] : face.weight;
+  }
+
+  function facesList(slot) {
+    const faces = facesOf(slot);
+    if (!faces.length) return [h("p", { class: "pg-note" }, "No static faces configured — using the fallback stack.")];
+    return faces.map((face, i) => {
+      const label = `${face.src} — ${face.weight}${face.style === "italic" ? " italic" : ""}`;
+      return h("p", { class: "pg-note", id: `facestatus-${slot}-${i}` }, `${label} — checking…`);
+    });
+  }
+
+  function setFaceStatusNode(slot, i, face, status) {
+    const node = $(`facestatus-${slot}-${i}`);
+    if (!node) return;
+    const label = `${face.src} — ${face.weight}${face.style === "italic" ? " italic" : ""}`;
+    node.textContent = `${label} — ${status}`;
+    node.className = `pg-note ${status === "loaded" ? "ok" : "warn"}`;
+  }
+
+  async function checkFaces() {
+    for (const slot of ["sans", "mono", "serif"]) {
+      const font = config.fonts[slot];
+      const faces = facesOf(slot);
+      if (!font.family) continue;
+      for (let i = 0; i < faces.length; i++) {
+        const face = faces[i];
+        const key = faceKey(slot, face);
+        const spec = `${face.style === "italic" ? "italic " : ""}${checkWeightOf(face)} 16px "${font.family}"`;
+        try {
+          const result = await document.fonts.load(spec);
+          faceStatus[key] = result.length > 0 ? "loaded" : "missing";
+        } catch {
+          faceStatus[key] = "missing";
+        }
+        setFaceStatusNode(slot, i, face, faceStatus[key]);
+      }
+    }
+  }
+
+  // ---------- apply ----------
+  function update(mutate) {
+    mutate();
+    apply();
+  }
+
+  function apply() {
+    $("tokens").textContent = generateTypographyCSS(config, {
+      fluidUnit: "cqi", // container units so the Width slider simulates a viewport
+    });
+    refreshMeta();
+    persist();
+    $("dirty").hidden = JSON.stringify(config) === JSON.stringify(DEFAULTS);
+    checkFaces();
+  }
+
+  function persist() {
+    store.set(STORAGE_KEY, { config, ui });
+  }
+
+  // ---------- preview ----------
+  const editable = (cls, content, tag = "p") => h(tag, { class: cls, contenteditable: "true", spellcheck: "false" }, content);
+
+  function renderPreview() {
+    document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === ui.tab));
+    const views = { specimen: specimenView, context: contextView, scale: scaleView };
+    $("preview").replaceChildren(views[ui.tab]());
+    refreshMeta();
+  }
+
+  function specimenView() {
+    return h("div", { class: "pv-specimen" }, [
+      ...ROLES.map((name) =>
+        h("div", { class: "pv-spec-row" },
+          h("div", { class: "pv-meta", "data-meta": name }),
+          editable(`text-${name}`, SAMPLES[name], name === "mono" ? "code" : "p"))),
+      h("div", { class: "pv-spec-row" },
+        h("div", { class: "pv-meta" }, h("strong", {}, "italic")),
+        h("p", {
+          contenteditable: "true", spellcheck: "false",
+          style: "font-family: var(--font-family-sans); font-size: var(--font-size-0); font-style: italic;",
+        }, "The quick brown fox jumps over the lazy dog — 0123456789.")),
+    ]);
+  }
+
+  function scaleView() {
+    return h("div", {}, [...SCALE_STEPS].reverse().map((s) =>
+      h("div", { class: "pv-ladder-row" },
+        h("div", { class: "pv-meta", "data-step": s }),
+        h("div", { class: "pv-ladder-sample", style: `font-size: var(--font-size-${s})`, contenteditable: "true", spellcheck: "false" },
+          "Aa — The quick brown fox jumps over the lazy dog"))));
+  }
+
+  function contextView() {
+    return h("div", { class: "pv-context" },
+      h("section", { class: "pv-hero" },
+        editable("text-label pv-eyebrow", "Case study · 2026"),
+        editable("text-display", "Calm interfaces for complex science", "h1"),
+        editable("text-body-lg", "How we turned years of physiological research into a product people open every morning — without dumbing down the science."),
+        h("div", { class: "pv-actions" },
+          h("span", { class: "pv-button text-label" }, "Read case study"),
+          h("span", { class: "pv-button ghost text-label" }, "View prototype"))),
+
+      h("section", { class: "pv-hero" },
+        editable("text-label pv-eyebrow", "Editorial · 2026"),
+        editable("text-display-editorial", "The quiet architecture of trust", "h1"),
+        editable("text-body-lg", "A companion headline style for case studies and article titles — set in the serif, for a warmer, more editorial register."),
+        h("div", { class: "pv-actions" },
+          h("span", { class: "pv-button text-label" }, "Read the article"),
+          h("span", { class: "pv-button ghost text-label" }, "View prototype"))),
+
+      h("section", { class: "pv-hero" },
+        editable("text-label pv-eyebrow", "Overflow check · long word"),
+        editable("text-display", "Desenvolvimento sustentável", "h1"),
+        editable("text-display-editorial", "Desenvolvimento sustentável", "p")),
+
+      h("article", { class: "pv-article" },
+        editable("text-heading-lg", "Why stress feels different in the body", "h2"),
+        editable("text-body-sm pv-byline", "FeelScience Journal · 12 min read · September 2026"),
+        editable("text-prose", "Heart-rate variability (HRV) describes the small changes in time between heartbeats. Higher variability is generally associated with a nervous system that adapts well to changing demands, while persistently low values can signal accumulated stress."),
+        editable("text-prose", "In a six-week study, participants wore a sensor overnight and logged how rested they felt each morning. The relationship between the two was stronger than either the sensor or the self-report alone."),
+        editable("text-heading-md", "What the research tells us", "h3"),
+        editable("text-prose", "Across 48 participants, morning HRV predicted self-reported energy with a correlation of r = 0.62. Temperature changes of ±0.5 °C had a smaller but measurable effect."),
+        h("figure", { class: "pv-figure" },
+          h("div", { class: "pv-figure-img", role: "img", "aria-label": "Placeholder chart" }),
+          editable("text-caption", "Figure 2. Morning HRV versus self-reported energy (n = 48, p < 0.05).", "figcaption")),
+        editable("text-heading-sm", "Methods and participants", "h4"),
+        editable("text-prose", "Data were collected with a chest-strap sensor sampling at 1,000 Hz. RMSSD was computed over a five-minute window before waking:"),
+        h("pre", { class: "pv-code" }, editable("text-mono", "const rmssd = Math.sqrt(mean(diffs.map((d) => d ** 2)));\n// median: 42.7 ms  ·  IQR: 31.2–58.9 ms", "code")),
+        editable("text-body-sm pv-footnote", "¹ Values are illustrative. This preview uses placeholder content to show hierarchy, not real findings.")),
+
+      h("section", { class: "pv-cards" },
+        ["Sleep", "Breathing", "Movement"].map((topic, i) =>
+          h("div", { class: "pv-card" },
+            editable("text-label pv-eyebrow", `Module 0${i + 1}`),
+            editable("text-heading-sm", `${topic} and recovery`, "h3"),
+            editable("text-body-sm", "A short description that sits under a card title and wraps onto a second line.")))));
+  }
+
+  function refreshMeta() {
+    document.querySelectorAll("[data-meta]").forEach((node) => {
+      const name = node.dataset.meta;
+      const role = config.roles[name];
+      const sample = node.nextElementSibling;
+      const size = sample ? parseFloat(getComputedStyle(sample).fontSize) : 0;
+      node.replaceChildren(
+        h("strong", {}, name),
+        `step ${role.step} · ${px(size)}`, h("br"),
+        `${role.font} ${role.weight} · lh ${role.lineHeight}`, h("br"),
+        `tracking ${role.tracking}em${role.transform !== "none" ? ` · ${role.transform}` : ""}`);
+    });
+    document.querySelectorAll("[data-step]").forEach((node) => {
+      const s = Number(node.dataset.step);
+      const size = parseFloat(getComputedStyle(node.nextElementSibling).fontSize);
+      const users = ROLES.filter((r) => config.roles[r].step === s);
+      node.replaceChildren(
+        h("strong", {}, `step ${s > 0 ? "+" : ""}${s}`),
+        `${px(size)} · ${Number((size / 16).toFixed(3))}rem`, h("br"),
+        users.length ? users.join(", ") : "—");
+    });
+  }
+
+  // ---------- toolbar ----------
+  function applyFrame() {
+    $("frame").style.maxWidth = ui.fit ? "" : `${ui.width}px`;
+    $("frame").classList.toggle("dark", ui.dark);
+    $("width").value = ui.width;
+    $("width").disabled = ui.fit;
+    $("fit").checked = ui.fit;
+    $("dark").checked = ui.dark;
+  }
+
+  new ResizeObserver(([entry]) => {
+    $("widthOut").value = `${Math.round(entry.contentRect.width)}px`;
+    refreshMeta();
+  }).observe($("frame"));
+
+  $("tabs").addEventListener("click", (e) => {
+    if (!e.target.dataset.tab) return;
+    ui.tab = e.target.dataset.tab;
+    renderPreview();
+    persist();
+  });
+  $("width").addEventListener("input", (e) => { ui.width = Number(e.target.value); applyFrame(); persist(); });
+  $("fit").addEventListener("change", (e) => { ui.fit = e.target.checked; applyFrame(); persist(); });
+  $("dark").addEventListener("change", (e) => { ui.dark = e.target.checked; applyFrame(); persist(); });
+  $("prev").addEventListener("click", () => goTo(Math.max(0, ui.step - 1)));
+  $("next").addEventListener("click", () => goTo(Math.min(STEPS.length - 1, ui.step + 1)));
+  $("reset").addEventListener("click", () => {
+    if (!confirm("Discard your edits and reload the values from typography.config.js?")) return;
+    config = structuredClone(DEFAULTS);
+    renderStep();
+    apply();
+  });
+
+  // ---------- export ----------
+  let exportKind = "config";
+  function exportText() {
+    if (exportKind === "css") return generateTypographyCSS(config);
+    return [
+      "/*",
+      " * Typography source of truth, shared by Portfolio2026 and FeelScience.",
+      " *",
+      " * Edit values here (or tweak them in type-playground.html and paste the",
+      " * copied config back into this file), then run:  node design-tokens/build.js",
+      " */",
+      `const TYPE_CONFIG = ${JSON.stringify(config, null, 2)};`,
+      "",
+      'if (typeof module !== "undefined") module.exports = TYPE_CONFIG;',
+      "",
+    ].join("\n");
+  }
+  function renderExport() {
+    document.querySelectorAll("#exportTabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.export === exportKind));
+    $("exportHint").innerHTML = exportKind === "config"
+      ? "Replace the contents of <code>design-tokens/typography.config.js</code> with this, then press Reset here so the page reloads from the file."
+      : "Preview of what <code>node design-tokens/build.js</code> writes to <code>typography.css</code>.";
+    $("exportText").value = exportText();
+    $("copy").textContent = "Copy";
+  }
+  $("export").addEventListener("click", () => { renderExport(); $("exportDialog").showModal(); });
+  $("closeExport").addEventListener("click", () => $("exportDialog").close());
+  $("exportTabs").addEventListener("click", (e) => {
+    if (!e.target.dataset.export) return;
+    exportKind = e.target.dataset.export;
+    renderExport();
+  });
+  $("copy").addEventListener("click", async () => {
+    const area = $("exportText");
+    try {
+      await navigator.clipboard.writeText(area.value);
+    } catch {
+      area.select();
+      document.execCommand("copy");
+    }
+    $("copy").textContent = "Copied";
+  });
+
+  // ---------- boot ----------
+  applyFrame();
+  renderStep();
+  renderPreview();
+  apply();
+})();
+</script>
+</body>
+</html>
