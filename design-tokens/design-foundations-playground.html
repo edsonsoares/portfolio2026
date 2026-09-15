@@ -3,10 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Type Playground</title>
+<title>Design Foundations Playground</title>
 <script src="typography.config.js"></script>
 <script src="generate-css.js"></script>
+<script src="color.config.js"></script>
+<script src="generate-color-css.js"></script>
 <style id="tokens"></style>
+<style id="colorTokens"></style>
 <style>
   /* ---------- Playground chrome (deliberately independent of the tokens) ---------- */
   * { box-sizing: border-box; }
@@ -27,6 +30,12 @@
   }
   .pg-panel header { padding: 16px 18px 12px; border-bottom: 1px solid #ececef; }
   .pg-panel h1 { font-size: 15px; margin: 0 0 10px; }
+  .pg-modeswitch { display: flex; gap: 4px; margin: 0 0 12px; }
+  .pg-modeswitch button {
+    flex: 1; border: 1px solid #d9d9de; background: #f6f6f8; border-radius: 6px;
+    padding: 6px 8px; cursor: pointer; font-size: 12px; font-weight: 600;
+  }
+  .pg-modeswitch button[aria-current="true"] { background: #1d1d1f; border-color: #1d1d1f; color: #fff; }
   .pg-stepnav { display: flex; gap: 4px; flex-wrap: wrap; }
   .pg-stepnav button {
     border: 1px solid #d9d9de; background: #f6f6f8; border-radius: 6px;
@@ -169,13 +178,67 @@
     .pg-step { max-height: 55vh; }
     .pg-stage { padding: 16px; }
   }
+
+  /* ---------- Color step controls ---------- */
+  .pg-swatchrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 14px; }
+  .pg-swatch { width: 100%; }
+  .pg-swatch-chip {
+    width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);
+  }
+  .pg-swatch-label { font-size: 10px; color: #6e6e73; text-align: center; margin-top: 3px; }
+
+  /* ---------- Color preview: dual frames ---------- */
+  .pg-color-frames { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) {
+    .pg-color-frames { grid-template-columns: 1fr; }
+  }
+  .pg-color-frame { border-radius: 10px; overflow: hidden; border: 1px solid #d9d9de; }
+  .pg-color-frame-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 14px; font-size: 12px; font-weight: 600; background: #f6f6f8;
+  }
+  .pg-color-frame-body { background: var(--color-bg); color: var(--color-text-primary); }
+  .pg-color-frame-body .pv-hero .text-body-lg,
+  .pg-color-frame-body .pv-byline,
+  .pg-color-frame-body .pv-figure figcaption,
+  .pg-color-frame-body .pv-footnote,
+  .pg-color-frame-body .pv-card .text-body-sm { color: var(--color-text-secondary); }
+  .pg-color-frame-body .pv-eyebrow { color: var(--color-accent); }
+  .pg-color-frame-body .pv-figure-img { background: linear-gradient(135deg, var(--color-surface-raised), var(--color-border-subtle)); }
+  .pg-color-frame-body .pv-code { background: var(--color-surface-raised); }
+  .pg-color-frame-body .pv-card { border-color: var(--color-border-subtle); }
+  .pg-color-frame-body .pv-spec-row,
+  .pg-color-frame-body .pv-ladder-row,
+  .pg-color-frame-body .pv-article,
+  .pg-color-frame-body .pv-footnote { border-color: var(--color-border-subtle); }
+  .pg-color-frame-body .pv-button { background: var(--color-accent); color: var(--color-text-on-accent); }
+  .pg-color-frame-body .pv-button.ghost { background: transparent; color: var(--color-text-primary); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+  .pg-color-frame-body [contenteditable]:focus { box-shadow: 0 0 0 2px var(--color-focus-ring); }
+
+  /* ---------- Contrast table ---------- */
+  .pg-contrast-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pg-contrast-table th, .pg-contrast-table td {
+    border: 1px solid #d9d9de; padding: 6px 10px; text-align: left; vertical-align: middle;
+  }
+  .pg-contrast-table th { background: #f6f6f8; }
+  .pg-contrast-swatch {
+    display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums;
+  }
+  .pg-contrast-dot { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); flex-shrink: 0; }
+  .pg-pass { color: #1f7a3a; font-weight: 700; }
+  .pg-fail { color: #c0392b; font-weight: 700; }
+  .pg-contrast-wrap { overflow-x: auto; }
 </style>
 </head>
 <body>
 <div class="pg-app">
   <aside class="pg-panel">
     <header>
-      <h1>Type Playground</h1>
+      <h1>Design Foundations Playground</h1>
+      <div class="pg-modeswitch" id="modeswitch">
+        <button data-mode="typography">Typography</button>
+        <button data-mode="color">Color</button>
+      </div>
       <nav class="pg-stepnav" id="stepnav" aria-label="Steps"></nav>
     </header>
     <section class="pg-step" id="step"></section>
@@ -184,29 +247,28 @@
       <button class="pg-btn primary" id="next">Next →</button>
       <span class="pg-spacer"></span>
       <span class="pg-dirty" id="dirty" hidden>Edited</span>
-      <button class="pg-btn" id="reset" title="Discard edits and reload values from typography.config.js">Reset</button>
+      <button class="pg-btn" id="reset">Reset</button>
       <button class="pg-btn" id="export">Export</button>
     </footer>
   </aside>
 
   <main class="pg-main">
     <div class="pg-toolbar">
-      <div class="pg-tabs" role="tablist" id="tabs">
-        <button role="tab" data-tab="specimen">Specimen</button>
-        <button role="tab" data-tab="context">In context</button>
-        <button role="tab" data-tab="scale">Scale</button>
+      <div class="pg-tabs" role="tablist" id="tabs"></div>
+      <div class="pg-toolbar-extra" id="toolbarExtra" style="display: contents;">
+        <label>Width
+          <input type="range" id="width" min="320" max="1600" step="10">
+          <output id="widthOut"></output>
+        </label>
+        <label><input type="checkbox" id="fit"> Fit</label>
+        <label><input type="checkbox" id="dark"> Dark</label>
       </div>
-      <label>Width
-        <input type="range" id="width" min="320" max="1600" step="10">
-        <output id="widthOut"></output>
-      </label>
-      <label><input type="checkbox" id="fit"> Fit</label>
-      <label><input type="checkbox" id="dark"> Dark</label>
     </div>
-    <div class="pg-stage">
+    <div class="pg-stage" id="stage">
       <div class="pg-frame" id="frame">
         <div class="pv" id="preview"></div>
       </div>
+      <div id="colorStage" hidden></div>
     </div>
   </main>
 </div>
@@ -214,8 +276,10 @@
 <dialog id="exportDialog">
   <div class="pg-dialog-head">
     <div class="pg-tabs" id="exportTabs">
-      <button data-export="config" aria-selected="true">typography.config.js</button>
-      <button data-export="css">typography.css</button>
+      <button data-export="type-config" aria-selected="true">typography.config.js</button>
+      <button data-export="type-css">typography.css</button>
+      <button data-export="color-config">color.config.js</button>
+      <button data-export="color-css">color.css</button>
     </div>
     <span class="pg-spacer"></span>
     <button class="pg-btn primary" id="copy">Copy</button>
@@ -229,11 +293,10 @@
 
 <script>
 (() => {
-  // Bumped because mergeKnown used to turn saved `faces` arrays into plain objects
-  // ({0: …, 1: …}), breaking step 3 and font-face generation after a reload.
-  const STORAGE_KEY = "type-playground:v3";
+  const STORAGE_KEY = "design-foundations-playground:v1";
   const DEFAULTS = structuredClone(TYPE_CONFIG);
   const ROLES = Object.keys(DEFAULTS.roles);
+  const COLOR_DEFAULTS = structuredClone(COLOR_CONFIG);
 
   const RATIOS = [
     [1.067, "Minor second"], [1.125, "Major second"], [1.2, "Minor third"], [1.25, "Major third"],
@@ -275,17 +338,46 @@
     return result;
   }
 
-  const saved = store.get(STORAGE_KEY) || {};
-  let config = mergeKnown(DEFAULTS, saved.config ?? null);
+  // A cheap hash of a config file's current contents. Saved alongside the user's edited
+  // copy; if the file changes (a role added, a shape changed, a font swapped) the
+  // fingerprint no longer matches and the stale saved copy is discarded instead of
+  // silently shadowing the new file contents.
+  function fingerprintOf(value) {
+    const str = JSON.stringify(value);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+    return hash.toString(36);
+  }
+
+  const TYPE_FINGERPRINT = fingerprintOf(DEFAULTS);
+  const COLOR_FINGERPRINT = fingerprintOf(COLOR_DEFAULTS);
+
+  function restoreSection(defaults, fingerprint, savedSection) {
+    if (!savedSection || savedSection.fingerprint !== fingerprint) return structuredClone(defaults);
+    return mergeKnown(defaults, savedSection.config ?? null);
+  }
+
+  const savedRaw = store.get(STORAGE_KEY) || {};
+  let config = restoreSection(DEFAULTS, TYPE_FINGERPRINT, savedRaw.typography);
   // Font files and families are static assets from typography.config.js — never let a
   // stale/edited copy from localStorage shadow them.
   config.fonts = structuredClone(DEFAULTS.fonts);
+  let colorConfig = restoreSection(COLOR_DEFAULTS, COLOR_FINGERPRINT, savedRaw.color);
   const ui = {
-    step: saved.ui?.step ?? 0,
-    tab: saved.ui?.tab ?? "scale",
-    width: saved.ui?.width ?? 1100,
-    fit: saved.ui?.fit ?? true,
-    dark: saved.ui?.dark ?? false,
+    mode: savedRaw.ui?.mode ?? "typography",
+    step: savedRaw.ui?.step ?? 0,
+    tab: savedRaw.ui?.tab ?? "scale",
+    width: savedRaw.ui?.width ?? 1100,
+    fit: savedRaw.ui?.fit ?? true,
+    dark: savedRaw.ui?.dark ?? false,
+  };
+  const colorUi = {
+    step: savedRaw.colorUi?.step ?? 0,
+    tab: savedRaw.colorUi?.tab ?? "preview",
+    frameMode: {
+      a: savedRaw.colorUi?.frameMode?.a ?? "light",
+      b: savedRaw.colorUi?.frameMode?.b ?? "dark",
+    },
   };
   const $ = (id) => document.getElementById(id);
   function h(tag, props = {}, ...children) {
@@ -456,10 +548,10 @@
     },
   ];
 
-  function renderStep() {
+  function renderTypeStep() {
     const step = STEPS[ui.step];
     $("stepnav").replaceChildren(...STEPS.map((s, i) =>
-      h("button", { "aria-current": i === ui.step ? "step" : null, onclick: () => goTo(i) }, s.title)));
+      h("button", { "aria-current": i === ui.step ? "step" : null, onclick: () => goToType(i) }, s.title)));
     $("step").replaceChildren(
       h("h2", {}, step.title.replace(/^\d+ · /, "")),
       Object.assign(h("p", { class: "pg-hint" }), { innerHTML: step.hint }),
@@ -469,11 +561,11 @@
     $("next").disabled = ui.step === STEPS.length - 1;
   }
 
-  function goTo(i) {
+  function goToType(i) {
     ui.step = i;
     ui.tab = STEPS[i].tab;
-    renderStep();
-    renderPreview();
+    renderTypeStep();
+    renderTypePreview();
     persist();
   }
 
@@ -561,19 +653,25 @@
     });
     refreshMeta();
     persist();
-    $("dirty").hidden = JSON.stringify(config) === JSON.stringify(DEFAULTS);
+    updateDirty();
     checkFaces();
   }
 
   function persist() {
-    store.set(STORAGE_KEY, { config, ui });
+    store.set(STORAGE_KEY, {
+      ui,
+      colorUi,
+      typography: { config, fingerprint: TYPE_FINGERPRINT },
+      color: { config: colorConfig, fingerprint: COLOR_FINGERPRINT },
+    });
   }
 
   // ---------- preview ----------
   const editable = (cls, content, tag = "p") => h(tag, { class: cls, contenteditable: "true", spellcheck: "false" }, content);
 
-  function renderPreview() {
-    document.querySelectorAll("#tabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === ui.tab));
+  const TYPE_TABS = [["specimen", "Specimen"], ["context", "In context"], ["scale", "Scale"]];
+
+  function renderTypePreview() {
     const views = { specimen: specimenView, context: contextView, scale: scaleView };
     $("preview").replaceChildren(views[ui.tab]());
     refreshMeta();
@@ -671,6 +769,249 @@
     });
   }
 
+  // ---------- color: state & steps ----------
+  const ACCENT_PRESETS = [
+    [0.64, 0.17, 45, "Warm terracotta"],
+    [0.72, 0.11, 240, "Calm blue"],
+    [0.921, 0.201, 125, "Acid lime"],
+    [0.62, 0.19, 350, "Hot pink"],
+    [0.55, 0.15, 280, "Violet"],
+  ];
+  const NON_PICKABLE_ROLES = new Set(["text-on-accent", "focus-ring"]);
+  const COLOR_TABS = [["preview", "Preview"], ["contrast", "Contrast"]];
+
+  function updateDirty() {
+    const typeDirty = JSON.stringify(config) !== JSON.stringify(DEFAULTS);
+    const colorDirty = JSON.stringify(colorConfig) !== JSON.stringify(COLOR_DEFAULTS);
+    $("dirty").hidden = !(typeDirty || colorDirty);
+  }
+
+  function updateColor(mutate) {
+    mutate();
+    applyColor();
+  }
+
+  function applyColor() {
+    $("colorTokens").textContent = generateColorCSS(colorConfig);
+    refreshSwatchRows();
+    updateDirty();
+    persist();
+    if (ui.mode === "color") {
+      if (colorUi.tab === "preview") renderColorPreview();
+      else renderContrastTable();
+    }
+  }
+
+  function swatchRowFor(scaleName) {
+    return h("div", { class: "pg-swatchrow", "data-swatchrow": scaleName });
+  }
+
+  function refreshSwatchRows() {
+    const palette = resolvePalette(colorConfig);
+    document.querySelectorAll("[data-swatchrow]").forEach((node) => {
+      const scaleName = node.dataset.swatchrow;
+      const steps = scaleName === "neutral" ? NEUTRAL_STEPS : ACCENT_STEPS;
+      node.replaceChildren(...steps.map((step) => {
+        const hex = palette.scales[scaleName][step];
+        return h("div", {},
+          h("div", { class: "pg-swatch-chip", style: `background:${hex};`, title: hex }),
+          h("div", { class: "pg-swatch-label" }, `${step}`));
+      }));
+    });
+  }
+
+  function seedControls(seed, presets) {
+    const rows = [
+      row("Lightness", slider(seed.lightness, { min: 0.1, max: 0.95, step: 0.005 }, (v) => updateColor(() => (seed.lightness = v)))),
+      row("Chroma", slider(seed.chroma, { min: 0, max: 0.35, step: 0.005 }, (v) => updateColor(() => (seed.chroma = v)))),
+      row("Hue", slider(seed.hue, { min: 0, max: 360, step: 1 }, (v) => updateColor(() => (seed.hue = v)))),
+    ];
+    if (presets) {
+      rows.push(row("Presets", select("", [["", "Presets…"], ...presets.map((p, i) => [String(i), p[3]])], (v) => {
+        if (v === "") return;
+        const [lightness, chroma, hue] = presets[Number(v)];
+        updateColor(() => { seed.lightness = lightness; seed.chroma = chroma; seed.hue = hue; });
+        renderColorStep();
+      })));
+    }
+    return rows;
+  }
+
+  function scaleStepControl(current, onChange) {
+    const scaleNames = ["neutral", "accent", "red", "amber", "green", "blue"];
+    const stepsFor = (name) => (name === "neutral" ? NEUTRAL_STEPS : ACCENT_STEPS);
+    const [scaleName, step] = current;
+    const wrap = h("div", { class: "pg-control" });
+    const stepSel = h("select", { onchange: (e) => onChange([scaleName, Number(e.target.value)]) },
+      stepsFor(scaleName).map((s) => h("option", { value: s, selected: s === step }, s)));
+    const scaleSel = h("select", {
+      onchange: (e) => {
+        const newScale = e.target.value;
+        const steps = stepsFor(newScale);
+        const newStep = steps.includes(step) ? step : steps[Math.floor(steps.length / 2)];
+        onChange([newScale, newStep]);
+      },
+    }, scaleNames.map((n) => h("option", { value: n, selected: n === scaleName }, n)));
+    wrap.append(scaleSel, stepSel);
+    return wrap;
+  }
+
+  const COLOR_STEPS = [
+    {
+      title: "1 · Neutrals",
+      hint: "One hue drives the whole neutral scale — nearly gray, just enough warmth to feel intentional. Chroma stays constant across every step.",
+      render: () => {
+        const n = colorConfig.primitives.neutral;
+        return [
+          group("Neutral seed",
+            row("Hue", slider(n.hue, { min: 0, max: 360, step: 1 }, (v) => updateColor(() => (n.hue = v)))),
+            row("Chroma", slider(n.chroma, { min: 0, max: 0.03, step: 0.0005 }, (v) => updateColor(() => (n.chroma = v))))),
+          group("Steps (0 → 1000)", swatchRowFor("neutral")),
+        ];
+      },
+    },
+    {
+      title: "2 · Accents",
+      hint: "Each brand gets one seed. Hue is fixed across the scale; chroma peaks near the seed's lightness and tapers toward both ends.",
+      render: () => [
+        group("Portfolio", ...seedControls(colorConfig.primitives.accents.portfolio, ACCENT_PRESETS), swatchRowFor("portfolio")),
+        group("FeelScience", ...seedControls(colorConfig.primitives.accents.feelscience, ACCENT_PRESETS), swatchRowFor("feelscience")),
+      ],
+    },
+    {
+      title: "3 · Status colors",
+      hint: "Same generation rule as accents: peak chroma at the seed's lightness, tapering toward the ends.",
+      render: () => STATUS_NAMES.map((name) =>
+        group(name, ...seedControls(colorConfig.primitives.status[name]), swatchRowFor(name))),
+    },
+    {
+      title: "4 · Semantic mapping",
+      hint: "Pick which primitive step each role points to, separately for light and dark. <b>text-on-accent</b> and <b>focus-ring</b> are computed automatically and aren't listed here.",
+      render: () => {
+        const rows = [];
+        for (const [name, role] of Object.entries(colorConfig.semantic)) {
+          if (NON_PICKABLE_ROLES.has(name)) continue;
+          rows.push(row(`${name} · light`, scaleStepControl(role.light, (v) => updateColor(() => (role.light = v)))));
+          rows.push(row(`${name} · dark`, scaleStepControl(role.dark, (v) => updateColor(() => (role.dark = v)))));
+        }
+        return [group("Role → scale + step", ...rows)];
+      },
+    },
+  ];
+
+  function renderColorStep() {
+    const step = COLOR_STEPS[colorUi.step];
+    $("stepnav").replaceChildren(...COLOR_STEPS.map((s, i) =>
+      h("button", { "aria-current": i === colorUi.step ? "step" : null, onclick: () => goToColor(i) }, s.title)));
+    $("step").replaceChildren(
+      h("h2", {}, step.title.replace(/^\d+ · /, "")),
+      Object.assign(h("p", { class: "pg-hint" }), { innerHTML: step.hint || "" }),
+      ...step.render());
+    $("step").scrollTop = 0;
+    $("prev").disabled = colorUi.step === 0;
+    $("next").disabled = colorUi.step === COLOR_STEPS.length - 1;
+    refreshSwatchRows();
+  }
+
+  function goToColor(i) {
+    colorUi.step = i;
+    renderColorStep();
+    renderPreview();
+    persist();
+  }
+
+  // ---------- color: preview ----------
+  function colorFrame(brandLabel, brand, key) {
+    const mode = colorUi.frameMode[key];
+    return h("div", { class: "pg-color-frame" },
+      h("div", { class: "pg-color-frame-head" },
+        h("span", {}, `${brandLabel} · ${mode}`),
+        h("button", {
+          class: "pg-btn", onclick: () => {
+            colorUi.frameMode[key] = mode === "light" ? "dark" : "light";
+            persist();
+            renderColorPreview();
+          },
+        }, "Toggle mode")),
+      h("div", { class: "pg-color-frame-body pv", "data-brand": brand, "data-mode": mode }, contextView()));
+  }
+
+  function renderColorPreview() {
+    $("colorStage").replaceChildren(
+      h("div", { class: "pg-color-frames" },
+        colorFrame("Portfolio", "portfolio", "a"),
+        colorFrame("FeelScience", "feelscience", "b")));
+  }
+
+  // ---------- color: contrast ----------
+  const CONTRAST_TEXT_ROLES = ["text-primary", "text-secondary", "accent-text", "text-on-accent"];
+  const CONTRAST_BG_ROLES = ["bg", "surface", "accent"];
+  const CONTRAST_COMBOS = [["portfolio", "light"], ["portfolio", "dark"], ["feelscience", "light"], ["feelscience", "dark"]];
+
+  function renderContrastTable() {
+    const palette = resolvePalette(colorConfig);
+    const table = h("table", { class: "pg-contrast-table" },
+      h("thead", {}, h("tr", {},
+        h("th", {}, "Text"), h("th", {}, "Background"),
+        ...CONTRAST_COMBOS.map(([brand, mode]) => h("th", {}, `${brand} · ${mode}`)))),
+      h("tbody", {}, CONTRAST_TEXT_ROLES.flatMap((textRole) =>
+        CONTRAST_BG_ROLES.map((bgRole) =>
+          h("tr", {},
+            h("td", {}, textRole),
+            h("td", {}, bgRole),
+            ...CONTRAST_COMBOS.map(([brand, mode]) => {
+              const textHex = palette.semanticHex[brand][mode][textRole];
+              const bgHex = palette.semanticHex[brand][mode][bgRole];
+              const ratio = contrastRatio(textHex, bgHex);
+              const pass = ratio >= 4.5;
+              return h("td", {},
+                h("div", { class: "pg-contrast-swatch" },
+                  h("span", { class: "pg-contrast-dot", style: `background:${textHex};` }),
+                  h("span", { class: "pg-contrast-dot", style: `background:${bgHex};` }),
+                  `${ratio.toFixed(2)}:1`),
+                h("div", { class: pass ? "pg-pass" : "pg-fail" }, pass ? "AA pass" : "AA fail"));
+            }))))));
+    $("colorStage").replaceChildren(
+      h("div", { class: "pg-contrast-wrap" }, table),
+      h("p", { class: "pg-note" }, "AA thresholds: 4.5:1 for normal text (shown above). Large text and UI borders/components need only 3:1."));
+  }
+
+  // ---------- mode dispatch ----------
+  function renderModeSwitch() {
+    document.querySelectorAll("#modeswitch button").forEach((b) =>
+      b.setAttribute("aria-current", b.dataset.mode === ui.mode ? "true" : "false"));
+  }
+
+  function renderTabs() {
+    if (ui.mode === "typography") {
+      $("tabs").replaceChildren(...TYPE_TABS.map(([key, label]) =>
+        h("button", { role: "tab", "data-tab": key, "aria-selected": key === ui.tab }, label)));
+    } else {
+      $("tabs").replaceChildren(...COLOR_TABS.map(([key, label]) =>
+        h("button", { role: "tab", "data-tab": key, "aria-selected": key === colorUi.tab }, label)));
+    }
+  }
+
+  function renderStage() {
+    const isType = ui.mode === "typography";
+    $("frame").hidden = !isType;
+    $("colorStage").hidden = isType;
+    $("toolbarExtra").style.display = isType ? "contents" : "none";
+    if (isType) renderTypePreview();
+    else if (colorUi.tab === "preview") renderColorPreview();
+    else renderContrastTable();
+  }
+
+  function renderStep() {
+    if (ui.mode === "typography") renderTypeStep();
+    else renderColorStep();
+  }
+
+  function renderPreview() {
+    renderTabs();
+    renderStage();
+  }
+
   // ---------- toolbar ----------
   function applyFrame() {
     $("frame").style.maxWidth = ui.fit ? "" : `${ui.width}px`;
@@ -688,32 +1029,71 @@
 
   $("tabs").addEventListener("click", (e) => {
     if (!e.target.dataset.tab) return;
-    ui.tab = e.target.dataset.tab;
+    if (ui.mode === "typography") ui.tab = e.target.dataset.tab;
+    else colorUi.tab = e.target.dataset.tab;
     renderPreview();
     persist();
   });
   $("width").addEventListener("input", (e) => { ui.width = Number(e.target.value); applyFrame(); persist(); });
   $("fit").addEventListener("change", (e) => { ui.fit = e.target.checked; applyFrame(); persist(); });
   $("dark").addEventListener("change", (e) => { ui.dark = e.target.checked; applyFrame(); persist(); });
-  $("prev").addEventListener("click", () => goTo(Math.max(0, ui.step - 1)));
-  $("next").addEventListener("click", () => goTo(Math.min(STEPS.length - 1, ui.step + 1)));
+  $("prev").addEventListener("click", () => {
+    if (ui.mode === "typography") goToType(Math.max(0, ui.step - 1));
+    else goToColor(Math.max(0, colorUi.step - 1));
+  });
+  $("next").addEventListener("click", () => {
+    if (ui.mode === "typography") goToType(Math.min(STEPS.length - 1, ui.step + 1));
+    else goToColor(Math.min(COLOR_STEPS.length - 1, colorUi.step + 1));
+  });
   $("reset").addEventListener("click", () => {
-    if (!confirm("Discard your edits and reload the values from typography.config.js?")) return;
-    config = structuredClone(DEFAULTS);
+    if (ui.mode === "typography") {
+      if (!confirm("Discard your edits and reload the values from typography.config.js?")) return;
+      config = structuredClone(DEFAULTS);
+      renderTypeStep();
+      apply();
+    } else {
+      if (!confirm("Discard your edits and reload the values from color.config.js?")) return;
+      colorConfig = structuredClone(COLOR_DEFAULTS);
+      renderColorStep();
+      applyColor();
+    }
+    renderPreview();
+  });
+  $("modeswitch").addEventListener("click", (e) => {
+    const mode = e.target.dataset.mode;
+    if (!mode || mode === ui.mode) return;
+    ui.mode = mode;
+    renderModeSwitch();
     renderStep();
-    apply();
+    renderPreview();
+    persist();
   });
 
   // ---------- export ----------
-  let exportKind = "config";
+  let exportKind = "type-config";
   function exportText() {
-    if (exportKind === "css") return generateTypographyCSS(config);
+    if (exportKind === "type-css") return generateTypographyCSS(config);
+    if (exportKind === "color-css") return generateColorCSS(colorConfig);
+    if (exportKind === "color-config") {
+      return [
+        "/*",
+        " * Color source of truth, shared by Portfolio2026 and FeelScience.",
+        " *",
+        " * Edit values here (or tweak them in design-foundations-playground.html and",
+        " * paste the copied config back into this file), then run:  node design-tokens/build.js",
+        " */",
+        `const COLOR_CONFIG = ${JSON.stringify(colorConfig, null, 2)};`,
+        "",
+        'if (typeof module !== "undefined") module.exports = COLOR_CONFIG;',
+        "",
+      ].join("\n");
+    }
     return [
       "/*",
       " * Typography source of truth, shared by Portfolio2026 and FeelScience.",
       " *",
-      " * Edit values here (or tweak them in type-playground.html and paste the",
-      " * copied config back into this file), then run:  node design-tokens/build.js",
+      " * Edit values here (or tweak them in design-foundations-playground.html and paste",
+      " * the copied config back into this file), then run:  node design-tokens/build.js",
       " */",
       `const TYPE_CONFIG = ${JSON.stringify(config, null, 2)};`,
       "",
@@ -721,11 +1101,15 @@
       "",
     ].join("\n");
   }
+  const EXPORT_HINTS = {
+    "type-config": "Replace the contents of <code>design-tokens/typography.config.js</code> with this, then press Reset (Typography mode) so the page reloads from the file.",
+    "type-css": "Preview of what <code>node design-tokens/build.js</code> writes to <code>typography.css</code>.",
+    "color-config": "Replace the contents of <code>design-tokens/color.config.js</code> with this, then press Reset (Color mode) so the page reloads from the file.",
+    "color-css": "Preview of what <code>node design-tokens/build.js</code> writes to <code>color.css</code>.",
+  };
   function renderExport() {
     document.querySelectorAll("#exportTabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.export === exportKind));
-    $("exportHint").innerHTML = exportKind === "config"
-      ? "Replace the contents of <code>design-tokens/typography.config.js</code> with this, then press Reset here so the page reloads from the file."
-      : "Preview of what <code>node design-tokens/build.js</code> writes to <code>typography.css</code>.";
+    $("exportHint").innerHTML = EXPORT_HINTS[exportKind];
     $("exportText").value = exportText();
     $("copy").textContent = "Copy";
   }
@@ -749,9 +1133,11 @@
 
   // ---------- boot ----------
   applyFrame();
+  apply();
+  applyColor();
+  renderModeSwitch();
   renderStep();
   renderPreview();
-  apply();
 })();
 </script>
 </body>

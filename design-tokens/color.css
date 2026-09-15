@@ -1,0 +1,183 @@
+/* Color tokens. Generated from color.config.js — do not edit by hand. */
+
+:root {
+  /* Neutral */
+  --color-neutral-0: #fffdfa;
+  --color-neutral-50: #f4f2ef;
+  --color-neutral-100: #eae7e4;
+  --color-neutral-200: #d6d4d1;
+  --color-neutral-300: #bcbab7;
+  --color-neutral-400: #9d9b98;
+  --color-neutral-500: #807e7b;
+  --color-neutral-600: #656360;
+  --color-neutral-700: #4d4b49;
+  --color-neutral-800: #393835;
+  --color-neutral-900: #2a2826;
+  --color-neutral-950: #181715;
+  --color-neutral-1000: #030202;
+
+  /* portfolio */
+  --color-portfolio-50: #ffefe8;
+  --color-portfolio-100: #fee1d4;
+  --color-portfolio-200: #ffc6ac;
+  --color-portfolio-300: #fda075;
+  --color-portfolio-400: #e87841;
+  --color-portfolio-500: #cd5400;
+  --color-portfolio-600: #a0430c;
+  --color-portfolio-700: #7d3102;
+  --color-portfolio-800: #5e2402;
+  --color-portfolio-900: #461801;
+  --color-portfolio-950: #280f04;
+
+  /* feelscience */
+  --color-feelscience-50: #e7f5ff;
+  --color-feelscience-100: #d3ecff;
+  --color-feelscience-200: #aadbff;
+  --color-feelscience-300: #7bc3f6;
+  --color-feelscience-400: #55a4d8;
+  --color-feelscience-500: #3d86b5;
+  --color-feelscience-600: #2a6992;
+  --color-feelscience-700: #1c5172;
+  --color-feelscience-800: #133c55;
+  --color-feelscience-900: #0f2b3d;
+  --color-feelscience-950: #091924;
+
+  /* red */
+  --color-red-50: #ffeeeb;
+  --color-red-100: #fee0db;
+  --color-red-200: #fec4bb;
+  --color-red-300: #fc9d8f;
+  --color-red-400: #f46a59;
+  --color-red-500: #d94234;
+  --color-red-600: #b12a20;
+  --color-red-700: #8b1b13;
+  --color-red-800: #68130d;
+  --color-red-900: #4b110c;
+  --color-red-950: #2b0c08;
+
+  /* amber */
+  --color-amber-50: #fef1da;
+  --color-amber-100: #fee4ba;
+  --color-amber-200: #fdcc76;
+  --color-amber-300: #f0ad15;
+  --color-amber-400: #c99006;
+  --color-amber-500: #a47507;
+  --color-amber-600: #815c07;
+  --color-amber-700: #644500;
+  --color-amber-800: #4b3300;
+  --color-amber-900: #372400;
+  --color-amber-950: #221400;
+
+  /* green */
+  --color-green-50: #e3fae3;
+  --color-green-100: #cef4ce;
+  --color-green-200: #b0e4b1;
+  --color-green-300: #8dcd8f;
+  --color-green-400: #65b068;
+  --color-green-500: #3f9446;
+  --color-green-600: #297531;
+  --color-green-700: #1b5a22;
+  --color-green-800: #134318;
+  --color-green-900: #103013;
+  --color-green-950: #0b1c0b;
+
+  /* blue */
+  --color-blue-50: #e7f5ff;
+  --color-blue-100: #d3ecfe;
+  --color-blue-200: #acdbfd;
+  --color-blue-300: #7bc3f5;
+  --color-blue-400: #4da4dd;
+  --color-blue-500: #1787c4;
+  --color-blue-600: #0a6a9c;
+  --color-blue-700: #00517a;
+  --color-blue-800: #013c5b;
+  --color-blue-900: #042c43;
+  --color-blue-950: #061926;
+}
+
+:root, [data-brand="portfolio"] {
+  /* accent → active brand (default) */
+  --color-accent-50: var(--color-portfolio-50);
+  --color-accent-100: var(--color-portfolio-100);
+  --color-accent-200: var(--color-portfolio-200);
+  --color-accent-300: var(--color-portfolio-300);
+  --color-accent-400: var(--color-portfolio-400);
+  --color-accent-500: var(--color-portfolio-500);
+  --color-accent-600: var(--color-portfolio-600);
+  --color-accent-700: var(--color-portfolio-700);
+  --color-accent-800: var(--color-portfolio-800);
+  --color-accent-900: var(--color-portfolio-900);
+  --color-accent-950: var(--color-portfolio-950);
+}
+
+[data-brand="feelscience"] {
+  --color-accent-50: var(--color-feelscience-50);
+  --color-accent-100: var(--color-feelscience-100);
+  --color-accent-200: var(--color-feelscience-200);
+  --color-accent-300: var(--color-feelscience-300);
+  --color-accent-400: var(--color-feelscience-400);
+  --color-accent-500: var(--color-feelscience-500);
+  --color-accent-600: var(--color-feelscience-600);
+  --color-accent-700: var(--color-feelscience-700);
+  --color-accent-800: var(--color-feelscience-800);
+  --color-accent-900: var(--color-feelscience-900);
+  --color-accent-950: var(--color-feelscience-950);
+}
+
+:root, [data-mode="light"] {
+  /* semantic roles → light */
+  --color-bg: var(--color-neutral-50);
+  --color-surface: var(--color-neutral-0);
+  --color-surface-raised: var(--color-neutral-100);
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-border-subtle: var(--color-neutral-200);
+  --color-border-strong: var(--color-neutral-400);
+  --color-accent: var(--color-accent-500);
+  --color-accent-hover: var(--color-accent-600);
+  --color-accent-subtle: var(--color-accent-100);
+  --color-accent-text: var(--color-accent-700);
+  --color-focus-ring: var(--color-accent-text);
+}
+
+[data-mode="dark"] {
+  /* semantic roles → dark */
+  --color-bg: var(--color-neutral-900);
+  --color-surface: var(--color-neutral-1000);
+  --color-surface-raised: var(--color-neutral-800);
+  --color-text-primary: var(--color-neutral-50);
+  --color-text-secondary: var(--color-neutral-400);
+  --color-border-subtle: var(--color-neutral-800);
+  --color-border-strong: var(--color-neutral-600);
+  --color-accent: var(--color-accent-400);
+  --color-accent-hover: var(--color-accent-300);
+  --color-accent-subtle: var(--color-accent-900);
+  --color-accent-text: var(--color-accent-300);
+  --color-focus-ring: var(--color-accent-text);
+}
+
+:root, [data-mode="light"] {
+  /* text-on-accent → active brand, light (default) */
+  --color-text-on-accent: #fffdfa;
+}
+
+[data-mode="dark"] {
+  /* text-on-accent → active brand, dark (default) */
+  --color-text-on-accent: #2a2826;
+}
+
+[data-brand="portfolio"][data-mode="light"] {
+  --color-text-on-accent: #fffdfa;
+}
+
+[data-brand="portfolio"][data-mode="dark"] {
+  --color-text-on-accent: #2a2826;
+}
+
+[data-brand="feelscience"][data-mode="light"] {
+  --color-text-on-accent: #fffdfa;
+}
+
+[data-brand="feelscience"][data-mode="dark"] {
+  --color-text-on-accent: #2a2826;
+}
