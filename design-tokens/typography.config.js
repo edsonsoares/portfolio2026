@@ -1,8 +1,8 @@
 /*
  * Typography source of truth, shared by Portfolio2026 and FeelScience.
  *
- * Edit values here (or tweak them in type-playground.html and paste the
- * copied config back into this file), then run:  node design-tokens/build.js
+ * Edit values here (or tweak them in design-foundations-playground.html and paste
+ * the copied config back into this file), then run:  node design-tokens/build.js
  */
 const TYPE_CONFIG = {
   fonts: {

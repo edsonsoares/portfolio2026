@@ -1,6 +1,6 @@
 /*
  * Turns a TYPE_CONFIG object into CSS custom properties + utility classes.
- * Used by both type-playground.html (browser) and build.js (Node).
+ * Used by both design-foundations-playground.html (browser) and build.js (Node).
  */
 (function (root) {
   const SCALE_STEPS = [-2, -1, 0, 1, 2, 3, 4, 5, 6];
