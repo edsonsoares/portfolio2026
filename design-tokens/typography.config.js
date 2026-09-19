@@ -67,6 +67,10 @@ const TYPE_CONFIG = {
     "body-sm":    { font: "sans", step: -1, weight: 400, lineHeight: 1.5,  tracking: 0,     transform: "none" },
     caption:      { font: "sans", step: -1, weight: 400, lineHeight: 1.4,  tracking: 0.01,  transform: "none" },
     label:        { font: "sans", step: -1, weight: 700, lineHeight: 1.2,  tracking: 0.06,  transform: "uppercase" },
+    // Buttons and other tappable actions: sentence case, no tracking (tracking is for
+    // uppercase legibility, and it also visually off-centers a button by adding a
+    // trailing space after the last glyph), one step larger than label for touch targets.
+    action:       { font: "sans", step: 0,  weight: 700, lineHeight: 1.2,  tracking: 0,     transform: "none" },
     mono:         { font: "mono", step: -1, weight: 400, lineHeight: 1.5,  tracking: 0,     transform: "none" },
   },
 };

@@ -139,10 +139,24 @@
   .pv-eyebrow { color: var(--pv-accent); }
   .pv-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
   .pv-button {
-    display: inline-block; padding: 0.85em 1.3em; border-radius: 999px;
+    display: inline-block; border-radius: 999px;
     background: var(--pv-fg); color: var(--pv-bg);
+    /* Sentence-case button text has no descenders, so the line box's reserved descender
+       space pushes it visually toward the top — trim to the glyphs themselves where
+       supported, and fall back to slightly more top padding than bottom elsewhere. */
+    text-box: trim-both cap alphabetic;
+    padding: 0.85em 1.25em 0.8em;
+    /* If a button ever carries letter-spacing again, reduce padding-right by that amount —
+       tracking adds a trailing space after the last glyph that otherwise pushes the
+       label off-center. .text-action has zero tracking, so no compensation is needed now. */
+    /* No visible border on the primary — the fill itself must carry enough contrast to
+       read (see accentFillStep in generate-color-css.js). Transparent border only,
+       so it's exactly the same box size as the outline button below. */
+    border: 1.5px solid transparent;
   }
-  .pv-button.ghost { background: transparent; color: var(--pv-fg); box-shadow: inset 0 0 0 1px var(--pv-line); }
+  /* currentColor ties the border to whatever the label color already is, so they can
+     never drift apart — no separate border-color token to keep in sync. */
+  .pv-button.ghost { background: transparent; color: var(--pv-fg); border: 1.5px solid currentColor; }
 
   .pv-article { display: grid; gap: 1em; max-width: var(--measure); }
   .pv-article > .text-heading-lg { margin-bottom: 0.1em; }
@@ -203,7 +217,8 @@
   .pg-color-frame-body .pv-figure figcaption,
   .pg-color-frame-body .pv-footnote,
   .pg-color-frame-body .pv-card .text-body-sm { color: var(--color-text-secondary); }
-  .pg-color-frame-body .pv-eyebrow { color: var(--color-accent); }
+  .pg-color-frame-body .text-label { color: var(--color-text-secondary); }
+  .pg-color-frame-body .pv-eyebrow { color: var(--color-accent-text); }
   .pg-color-frame-body .pv-figure-img { background: linear-gradient(135deg, var(--color-surface-raised), var(--color-border-subtle)); }
   .pg-color-frame-body .pv-code { background: var(--color-surface-raised); }
   .pg-color-frame-body .pv-card { border-color: var(--color-border-subtle); }
@@ -211,8 +226,11 @@
   .pg-color-frame-body .pv-ladder-row,
   .pg-color-frame-body .pv-article,
   .pg-color-frame-body .pv-footnote { border-color: var(--color-border-subtle); }
+  /* No border override for the primary here — it stays the base rule's transparent
+     1.5px, and dark-mode legibility comes from picking a lighter fill step entirely
+     (see accentFillStep in generate-color-css.js), not from an added border. */
   .pg-color-frame-body .pv-button { background: var(--color-accent); color: var(--color-text-on-accent); }
-  .pg-color-frame-body .pv-button.ghost { background: transparent; color: var(--color-text-primary); box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+  .pg-color-frame-body .pv-button.ghost { background: transparent; color: var(--color-text-primary); }
   .pg-color-frame-body [contenteditable]:focus { box-shadow: 0 0 0 2px var(--color-focus-ring); }
 
   /* ---------- Contrast table ---------- */
@@ -707,19 +725,19 @@
         editable("text-display", "Calm interfaces for complex science", "h1"),
         editable("text-body-lg", "How we turned years of physiological research into a product people open every morning — without dumbing down the science."),
         h("div", { class: "pv-actions" },
-          h("span", { class: "pv-button text-label" }, "Read case study"),
-          h("span", { class: "pv-button ghost text-label" }, "View prototype"))),
+          h("span", { class: "pv-button text-action" }, "Read case study"),
+          h("span", { class: "pv-button ghost text-action" }, "View prototype"))),
 
       h("section", { class: "pv-hero" },
-        editable("text-label pv-eyebrow", "Editorial · 2026"),
+        editable("text-label", "Editorial · 2026"),
         editable("text-display-editorial", "The quiet architecture of trust", "h1"),
         editable("text-body-lg", "A companion headline style for case studies and article titles — set in the serif, for a warmer, more editorial register."),
         h("div", { class: "pv-actions" },
-          h("span", { class: "pv-button text-label" }, "Read the article"),
-          h("span", { class: "pv-button ghost text-label" }, "View prototype"))),
+          h("span", { class: "pv-button text-action" }, "Read the article"),
+          h("span", { class: "pv-button ghost text-action" }, "View prototype"))),
 
       h("section", { class: "pv-hero" },
-        editable("text-label pv-eyebrow", "Overflow check · long word"),
+        editable("text-label", "Overflow check · long word"),
         editable("text-display", "Desenvolvimento sustentável", "h1"),
         editable("text-display-editorial", "Desenvolvimento sustentável", "p")),
 
@@ -741,7 +759,7 @@
       h("section", { class: "pv-cards" },
         ["Sleep", "Breathing", "Movement"].map((topic, i) =>
           h("div", { class: "pv-card" },
-            editable("text-label pv-eyebrow", `Module 0${i + 1}`),
+            editable("text-label", `Module 0${i + 1}`),
             editable("text-heading-sm", `${topic} and recovery`, "h3"),
             editable("text-body-sm", "A short description that sits under a card title and wraps onto a second line.")))));
   }
