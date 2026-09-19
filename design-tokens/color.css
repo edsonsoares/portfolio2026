@@ -1,46 +1,62 @@
 /* Color tokens. Generated from color.config.js — do not edit by hand. */
 
 :root {
-  /* Neutral */
-  --color-neutral-0: #fffdfa;
-  --color-neutral-50: #f4f2ef;
-  --color-neutral-100: #eae7e4;
-  --color-neutral-200: #d6d4d1;
-  --color-neutral-300: #bcbab7;
-  --color-neutral-400: #9d9b98;
-  --color-neutral-500: #807e7b;
-  --color-neutral-600: #656360;
-  --color-neutral-700: #4d4b49;
-  --color-neutral-800: #393835;
-  --color-neutral-900: #2a2826;
-  --color-neutral-950: #181715;
-  --color-neutral-1000: #030202;
+
+  /* portfolio neutral */
+  --color-neutral-portfolio-0: #fefdfd;
+  --color-neutral-portfolio-50: #f3f2f2;
+  --color-neutral-portfolio-100: #e8e7e7;
+  --color-neutral-portfolio-200: #d5d4d3;
+  --color-neutral-portfolio-300: #bcbab9;
+  --color-neutral-portfolio-400: #9d9b9a;
+  --color-neutral-portfolio-500: #807e7d;
+  --color-neutral-portfolio-600: #656362;
+  --color-neutral-portfolio-700: #4d4b4a;
+  --color-neutral-portfolio-800: #393737;
+  --color-neutral-portfolio-900: #2a2827;
+  --color-neutral-portfolio-950: #181716;
+  --color-neutral-portfolio-1000: #030202;
+
+  /* feelscience neutral */
+  --color-neutral-feelscience-0: #fdfdfe;
+  --color-neutral-feelscience-50: #f2f2f3;
+  --color-neutral-feelscience-100: #e7e8e9;
+  --color-neutral-feelscience-200: #d3d4d6;
+  --color-neutral-feelscience-300: #b9bbbd;
+  --color-neutral-feelscience-400: #999b9e;
+  --color-neutral-feelscience-500: #7d7f82;
+  --color-neutral-feelscience-600: #616366;
+  --color-neutral-feelscience-700: #4a4c4e;
+  --color-neutral-feelscience-800: #36383b;
+  --color-neutral-feelscience-900: #27292b;
+  --color-neutral-feelscience-950: #161719;
+  --color-neutral-feelscience-1000: #020203;
 
   /* portfolio */
-  --color-portfolio-50: #ffefe8;
-  --color-portfolio-100: #fee1d4;
-  --color-portfolio-200: #ffc6ac;
-  --color-portfolio-300: #fda075;
-  --color-portfolio-400: #e87841;
-  --color-portfolio-500: #cd5400;
-  --color-portfolio-600: #a0430c;
-  --color-portfolio-700: #7d3102;
-  --color-portfolio-800: #5e2402;
-  --color-portfolio-900: #461801;
-  --color-portfolio-950: #280f04;
+  --color-portfolio-50: #ffeeea;
+  --color-portfolio-100: #fee0d8;
+  --color-portfolio-200: #fdc5b5;
+  --color-portfolio-300: #fc9f84;
+  --color-portfolio-400: #fb6436;
+  --color-portfolio-500: #d8450f;
+  --color-portfolio-600: #ab350b;
+  --color-portfolio-700: #862501;
+  --color-portfolio-800: #651a01;
+  --color-portfolio-900: #4b1202;
+  --color-portfolio-950: #2c0b03;
 
   /* feelscience */
-  --color-feelscience-50: #e7f5ff;
-  --color-feelscience-100: #d3ecff;
-  --color-feelscience-200: #aadbff;
-  --color-feelscience-300: #7bc3f6;
-  --color-feelscience-400: #55a4d8;
-  --color-feelscience-500: #3d86b5;
-  --color-feelscience-600: #2a6992;
-  --color-feelscience-700: #1c5172;
-  --color-feelscience-800: #133c55;
-  --color-feelscience-900: #0f2b3d;
-  --color-feelscience-950: #091924;
+  --color-feelscience-50: #ecf3ff;
+  --color-feelscience-100: #dde8fe;
+  --color-feelscience-200: #c0d5fd;
+  --color-feelscience-300: #97baff;
+  --color-feelscience-400: #6998f7;
+  --color-feelscience-500: #4779e1;
+  --color-feelscience-600: #2659ca;
+  --color-feelscience-700: #073cb3;
+  --color-feelscience-800: #00288f;
+  --color-feelscience-900: #001a6f;
+  --color-feelscience-950: #000255;
 
   /* red */
   --color-red-50: #ffeeeb;
@@ -96,7 +112,20 @@
 }
 
 :root, [data-brand="portfolio"] {
-  /* accent → active brand (default) */
+  /* neutral + accent → active brand (default) */
+  --color-neutral-0: var(--color-neutral-portfolio-0);
+  --color-neutral-50: var(--color-neutral-portfolio-50);
+  --color-neutral-100: var(--color-neutral-portfolio-100);
+  --color-neutral-200: var(--color-neutral-portfolio-200);
+  --color-neutral-300: var(--color-neutral-portfolio-300);
+  --color-neutral-400: var(--color-neutral-portfolio-400);
+  --color-neutral-500: var(--color-neutral-portfolio-500);
+  --color-neutral-600: var(--color-neutral-portfolio-600);
+  --color-neutral-700: var(--color-neutral-portfolio-700);
+  --color-neutral-800: var(--color-neutral-portfolio-800);
+  --color-neutral-900: var(--color-neutral-portfolio-900);
+  --color-neutral-950: var(--color-neutral-portfolio-950);
+  --color-neutral-1000: var(--color-neutral-portfolio-1000);
   --color-accent-50: var(--color-portfolio-50);
   --color-accent-100: var(--color-portfolio-100);
   --color-accent-200: var(--color-portfolio-200);
@@ -111,6 +140,19 @@
 }
 
 [data-brand="feelscience"] {
+  --color-neutral-0: var(--color-neutral-feelscience-0);
+  --color-neutral-50: var(--color-neutral-feelscience-50);
+  --color-neutral-100: var(--color-neutral-feelscience-100);
+  --color-neutral-200: var(--color-neutral-feelscience-200);
+  --color-neutral-300: var(--color-neutral-feelscience-300);
+  --color-neutral-400: var(--color-neutral-feelscience-400);
+  --color-neutral-500: var(--color-neutral-feelscience-500);
+  --color-neutral-600: var(--color-neutral-feelscience-600);
+  --color-neutral-700: var(--color-neutral-feelscience-700);
+  --color-neutral-800: var(--color-neutral-feelscience-800);
+  --color-neutral-900: var(--color-neutral-feelscience-900);
+  --color-neutral-950: var(--color-neutral-feelscience-950);
+  --color-neutral-1000: var(--color-neutral-feelscience-1000);
   --color-accent-50: var(--color-feelscience-50);
   --color-accent-100: var(--color-feelscience-100);
   --color-accent-200: var(--color-feelscience-200);
@@ -133,10 +175,7 @@
   --color-text-secondary: var(--color-neutral-600);
   --color-border-subtle: var(--color-neutral-200);
   --color-border-strong: var(--color-neutral-400);
-  --color-accent: var(--color-accent-500);
-  --color-accent-hover: var(--color-accent-600);
   --color-accent-subtle: var(--color-accent-100);
-  --color-accent-text: var(--color-accent-700);
   --color-focus-ring: var(--color-accent-text);
 }
 
@@ -149,35 +188,98 @@
   --color-text-secondary: var(--color-neutral-400);
   --color-border-subtle: var(--color-neutral-800);
   --color-border-strong: var(--color-neutral-600);
-  --color-accent: var(--color-accent-400);
   --color-accent-hover: var(--color-accent-300);
   --color-accent-subtle: var(--color-accent-900);
-  --color-accent-text: var(--color-accent-300);
   --color-focus-ring: var(--color-accent-text);
 }
 
 :root, [data-mode="light"] {
+  /* accent → active brand, light (default) */
+  --color-accent: #ab350b;
+}
+
+[data-mode="dark"] {
+  /* accent → active brand, dark (default) */
+  --color-accent: #fb6436;
+}
+
+[data-brand="portfolio"][data-mode="light"] {
+  --color-accent: #ab350b; /* step 600, 5.79:1 vs bg, text 6.37:1, moved from anchor 400 for label contrast */
+}
+
+[data-brand="portfolio"][data-mode="dark"] {
+  --color-accent: #fb6436; /* step 400, 4.88:1 vs bg, text 6.89:1 */
+}
+
+[data-brand="feelscience"][data-mode="light"] {
+  --color-accent: #073cb3; /* step 700, 8.14:1 vs bg, text 8.96:1 */
+}
+
+[data-brand="feelscience"][data-mode="dark"] {
+  --color-accent: #073cb3; /* step 700, 1.60:1 vs bg, text 8.96:1 — known exception: true brand color kept below 3:1 vs bg by design */
+}
+
+:root, [data-mode="light"] {
+  /* accent-hover → active brand, light (default) */
+  --color-accent-hover: #862501;
+}
+
+[data-brand="portfolio"][data-mode="light"] {
+  --color-accent-hover: #862501;
+}
+
+[data-brand="feelscience"][data-mode="light"] {
+  --color-accent-hover: #00288f;
+}
+
+:root, [data-mode="light"] {
+  /* accent-text → active brand, light (default) */
+  --color-accent-text: #ab350b;
+}
+
+[data-mode="dark"] {
+  /* accent-text → active brand, dark (default) */
+  --color-accent-text: #fc9f84;
+}
+
+[data-brand="portfolio"][data-mode="light"] {
+  --color-accent-text: #ab350b; /* step 600, 5.79:1 vs bg */
+}
+
+[data-brand="portfolio"][data-mode="dark"] {
+  --color-accent-text: #fc9f84; /* step 300, 7.29:1 vs bg */
+}
+
+[data-brand="feelscience"][data-mode="light"] {
+  --color-accent-text: #073cb3; /* step 700, 8.14:1 vs bg */
+}
+
+[data-brand="feelscience"][data-mode="dark"] {
+  --color-accent-text: #97baff; /* step 300, 7.50:1 vs bg */
+}
+
+:root, [data-mode="light"] {
   /* text-on-accent → active brand, light (default) */
-  --color-text-on-accent: #fffdfa;
+  --color-text-on-accent: #fefdfd;
 }
 
 [data-mode="dark"] {
   /* text-on-accent → active brand, dark (default) */
-  --color-text-on-accent: #2a2826;
+  --color-text-on-accent: #030202;
 }
 
 [data-brand="portfolio"][data-mode="light"] {
-  --color-text-on-accent: #fffdfa;
+  --color-text-on-accent: #fefdfd;
 }
 
 [data-brand="portfolio"][data-mode="dark"] {
-  --color-text-on-accent: #2a2826;
+  --color-text-on-accent: #030202;
 }
 
 [data-brand="feelscience"][data-mode="light"] {
-  --color-text-on-accent: #fffdfa;
+  --color-text-on-accent: #fdfdfe;
 }
 
 [data-brand="feelscience"][data-mode="dark"] {
-  --color-text-on-accent: #2a2826;
+  --color-text-on-accent: #fdfdfe;
 }

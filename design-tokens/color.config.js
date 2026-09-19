@@ -14,22 +14,36 @@
  */
 const COLOR_CONFIG = {
   primitives: {
-    // One hue for the entire neutral scale — warm, nearly gray.
-    // Seeds: light #f4f2ef ≈ oklch(96.2% 0.005 78)  → neutral-50
-    //        dark  #28282a ≈ oklch(27.8% 0.004 286) → neutral-900
-    // The dark seed's own hue (286) is measurement noise — at chroma this low,
-    // hue is nearly imperceptible, so the whole scale is pinned to one hue (78)
-    // per the "one hue for the whole scale" rule; the dark anchor still lands
-    // within a couple of RGB units of #28282a.
-    neutral: { hue: 78, chroma: 0.005 },
+    // One hue per brand's neutral scale — each nearly gray, just tinted toward
+    // that brand's personality. Unlike accents, neutrals use a *light-end taper*
+    // (see NEUTRAL_CHROMA_ENVELOPE in generate-color-css.js) instead of a flat
+    // chroma: steps 0/50 sit at ~20% of this chroma so bg/surface read as nearly
+    // pure gray, building up to 100% through the middle/dark steps and easing back
+    // to ~60% at step 1000. The seed below is that full (100%) chroma, not what
+    // the lightest steps actually render at.
+    neutrals: {
+      portfolio: { hue: 50, chroma: 0.003 },
+      feelscience: { hue: 255, chroma: 0.005 },
+    },
 
     // Brand accent scales. Each seed's hue is used for every step in that scale;
     // its chroma is the *peak* of the scale's chroma envelope (see generate-color-css.js).
     // `lightness` is kept for reference/preview only — the actual per-step lightness
     // always comes from the shared ladder, not from the seed.
     accents: {
-      portfolio: { hue: 45, chroma: 0.17, lightness: 0.64 }, // PLACEHOLDER: warm terracotta
-      feelscience: { hue: 240, chroma: 0.11, lightness: 0.72 }, // PLACEHOLDER: calm blue
+      portfolio: { hue: 37, chroma: 0.207, lightness: 0.67 }, // Vivid orange-red: #F95721
+      feelscience: {
+        hue: 263, chroma: 0.195, lightness: 0.379, // International Klein Blue: #002FA7
+        // Deliberate brand decision: dark-mode fill stays true Klein (the anchor step)
+        // instead of picking a lighter, higher-contrast step. Klein-on-dark-bg is only
+        // ~1.37:1 — below the 3:1 guideline for interface boundaries, so the button's
+        // edge isn't distinguishable from the page. The label is what has to stay
+        // legible, and white-on-Klein is 10.69:1, comfortably past AA — see
+        // darkFillStep/textOnAccent in generate-color-css.js, which force the anchor
+        // step and white text respectively when this flag is set, and the "known
+        // exception" contrast-table entry in the playground.
+        darkFillException: true,
+      },
     },
     // Brand used where CSS can't yet see a [data-brand] attribute.
     activeBrand: "portfolio",
@@ -56,12 +70,27 @@ const COLOR_CONFIG = {
     "text-secondary": { light: ["neutral", 600], dark: ["neutral", 400] },
     "border-subtle": { light: ["neutral", 200], dark: ["neutral", 800] },
     "border-strong": { light: ["neutral", 400], dark: ["neutral", 600] },
-    accent: { light: ["accent", 500], dark: ["accent", 400] },
-    "accent-hover": { light: ["accent", 600], dark: ["accent", 300] },
+    // Fill prefers the brand's *anchor* step — the accent step whose lightness is closest
+    // to that brand's seed lightness, i.e. the truest rendition of the brand color
+    // (terracotta ~500, Klein blue ~700) — in both modes. If the anchor doesn't allow a
+    // legible label (>= 4.5:1 with neutral-0 or neutral-900), accentFillStep in
+    // generate-color-css.js searches outward for the nearest step that does (this is what
+    // moves portfolio off its 500 anchor — 500 tops out at 4.25:1 either way). The primary
+    // button has no border to fall back on, so dark mode also requires >= 3:1 against bg,
+    // which is what moves feelscience off Klein normally — except feelscience declares
+    // `darkFillException` below, keeping true Klein anyway as a deliberate trade-off.
+    accent: { light: { computed: "accent-fill" }, dark: { computed: "accent-fill" } },
+    // One step darker than the light anchor, so hover reads as a deepening of the true
+    // brand color rather than an unrelated fixed step.
+    "accent-hover": { light: { computed: "accent-hover-anchor" }, dark: ["accent", 300] },
     "accent-subtle": { light: ["accent", 100], dark: ["accent", 900] },
-    "accent-text": { light: ["accent", 700], dark: ["accent", 300] },
+    // Contrast-driven, not a fixed step: prefers the anchor step itself if it clears the
+    // mode's target ratio (4.5:1 in light, 7:1 in dark — small accent text needs the
+    // stricter target), else the step closest to the seed lightness that does. Falls
+    // back to the highest-contrast step (flagged in build output) if none clear it.
+    "accent-text": { light: { computed: "accent-text" }, dark: { computed: "accent-text" } },
     // Whichever of neutral-0 / neutral-900 contrasts more against that mode's accent.
-    "text-on-accent": { computed: "text-on-accent" },
+    "text-on-accent": { light: { computed: "text-on-accent" }, dark: { computed: "text-on-accent" } },
     // Same value as accent-text, in both modes.
     "focus-ring": { alias: "accent-text" },
   },

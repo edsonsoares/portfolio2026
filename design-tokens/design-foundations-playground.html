@@ -795,7 +795,6 @@
     [0.62, 0.19, 350, "Hot pink"],
     [0.55, 0.15, 280, "Violet"],
   ];
-  const NON_PICKABLE_ROLES = new Set(["text-on-accent", "focus-ring"]);
   const COLOR_TABS = [["preview", "Preview"], ["contrast", "Contrast"]];
 
   function updateDirty() {
@@ -827,10 +826,13 @@
   function refreshSwatchRows() {
     const palette = resolvePalette(colorConfig);
     document.querySelectorAll("[data-swatchrow]").forEach((node) => {
-      const scaleName = node.dataset.swatchrow;
-      const steps = scaleName === "neutral" ? NEUTRAL_STEPS : ACCENT_STEPS;
+      const spec = node.dataset.swatchrow;
+      const [kind, key] = spec.includes(":") ? spec.split(":") : [null, spec];
+      const isNeutral = kind === "neutral";
+      const steps = isNeutral ? NEUTRAL_STEPS : ACCENT_STEPS;
+      const scale = isNeutral ? palette.scales.neutrals[key] : palette.scales[key];
       node.replaceChildren(...steps.map((step) => {
-        const hex = palette.scales[scaleName][step];
+        const hex = scale[step];
         return h("div", {},
           h("div", { class: "pg-swatch-chip", style: `background:${hex};`, title: hex }),
           h("div", { class: "pg-swatch-label" }, `${step}`));
@@ -877,16 +879,16 @@
   const COLOR_STEPS = [
     {
       title: "1 · Neutrals",
-      hint: "One hue drives the whole neutral scale — nearly gray, just enough warmth to feel intentional. Chroma stays constant across every step.",
-      render: () => {
-        const n = colorConfig.primitives.neutral;
+      hint: "Each brand gets its own hue for the whole neutral scale — nearly gray, just enough tint to feel intentional. Chroma stays constant across every step.",
+      render: () => BRANDS.flatMap((brand) => {
+        const n = colorConfig.primitives.neutrals[brand];
         return [
-          group("Neutral seed",
+          group(`${brand} neutral`,
             row("Hue", slider(n.hue, { min: 0, max: 360, step: 1 }, (v) => updateColor(() => (n.hue = v)))),
-            row("Chroma", slider(n.chroma, { min: 0, max: 0.03, step: 0.0005 }, (v) => updateColor(() => (n.chroma = v))))),
-          group("Steps (0 → 1000)", swatchRowFor("neutral")),
+            row("Chroma", slider(n.chroma, { min: 0, max: 0.03, step: 0.0005 }, (v) => updateColor(() => (n.chroma = v)))),
+            swatchRowFor(`neutral:${brand}`)),
         ];
-      },
+      }),
     },
     {
       title: "2 · Accents",
@@ -904,13 +906,17 @@
     },
     {
       title: "4 · Semantic mapping",
-      hint: "Pick which primitive step each role points to, separately for light and dark. <b>text-on-accent</b> and <b>focus-ring</b> are computed automatically and aren't listed here.",
+      hint: "Pick which primitive step each role points to, separately for light and dark. Roles (or individual modes) marked <b>computed</b> are resolved automatically — e.g. accent's light-mode fill is always the brand's anchor step, and focus-ring aliases accent-text.",
       render: () => {
         const rows = [];
         for (const [name, role] of Object.entries(colorConfig.semantic)) {
-          if (NON_PICKABLE_ROLES.has(name)) continue;
-          rows.push(row(`${name} · light`, scaleStepControl(role.light, (v) => updateColor(() => (role.light = v)))));
-          rows.push(row(`${name} · dark`, scaleStepControl(role.dark, (v) => updateColor(() => (role.dark = v)))));
+          if (role.alias) continue; // nothing to pick — always mirrors another role
+          for (const mode of ["light", "dark"]) {
+            const value = role[mode];
+            rows.push(row(`${name} · ${mode}`, Array.isArray(value)
+              ? scaleStepControl(value, (v) => updateColor(() => (role[mode] = v)))
+              : h("p", { class: "pg-note" }, "computed automatically")));
+          }
         }
         return [group("Role → scale + step", ...rows)];
       },
