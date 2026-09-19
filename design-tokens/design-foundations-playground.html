@@ -245,7 +245,28 @@
   .pg-contrast-dot { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); flex-shrink: 0; }
   .pg-pass { color: #1f7a3a; font-weight: 700; }
   .pg-fail { color: #c0392b; font-weight: 700; }
+  .pg-exception { color: #b25000; font-weight: 700; }
   .pg-contrast-wrap { overflow-x: auto; }
+  .pg-contrast-table td:first-child { max-width: 220px; }
+
+  /* ---------- Contrast in context ---------- */
+  .pg-ctx-example { margin: 0 0 22px; }
+  .pg-ctx-example-label { font-size: 12px; font-weight: 700; margin: 0 0 8px; color: #3a3a3c; }
+  .pg-ctx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 900px) {
+    .pg-ctx-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .pg-ctx-cell { border-radius: 10px; padding: 14px; }
+  .pg-ctx-ratio { margin-top: 10px; font-size: 11px; opacity: 0.75; font-variant-numeric: tabular-nums; }
+  details.pg-note { color: inherit; font-size: 12px; margin: 10px 0 18px; }
+  details.pg-note summary { cursor: pointer; color: #3a3a3c; font-weight: 600; margin-bottom: 8px; }
+
+  /* Components used only by the "contrast in context" examples above. */
+  .pg-color-frame-body .pv-ctx-surface { background: var(--color-surface); padding: 10px 12px; border-radius: 8px; }
+  .pg-color-frame-body .pv-ctx-surface-raised { background: var(--color-surface-raised); padding: 10px 12px; border-radius: 8px; }
+  .pg-color-frame-body .pv-ctx-card { border: 1px solid var(--color-border-subtle); border-radius: 8px; padding: 10px 12px; }
+  .pg-color-frame-body .pv-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--color-accent-subtle); color: var(--color-accent-text); }
+  .pg-color-frame-body .pv-status-success { padding: 10px 12px; border-radius: 8px; background: var(--color-green-100); color: var(--color-green-700); }
 </style>
 </head>
 <body>
@@ -968,36 +989,152 @@
   }
 
   // ---------- color: contrast ----------
-  const CONTRAST_TEXT_ROLES = ["text-primary", "text-secondary", "accent-text", "text-on-accent"];
-  const CONTRAST_BG_ROLES = ["bg", "surface", "accent"];
   const CONTRAST_COMBOS = [["portfolio", "light"], ["portfolio", "dark"], ["feelscience", "light"], ["feelscience", "dark"]];
+
+  // WCAG: >=24px normal weight, or >=18.66px (~14pt) bold, counts as "large text" and
+  // only needs 3:1; everything else needs 4.5:1. Derived from the role's actual config
+  // (desktop-equivalent size, from typography's own stepPx) rather than hardcoded per
+  // pair, so it stays correct if a role's size or weight ever changes.
+  function textThresholdFor(roleName) {
+    const role = TYPE_CONFIG.roles[roleName];
+    const px = stepPx(TYPE_CONFIG, role.step).max;
+    const bold = role.weight >= 700; // UnB Pro's practical "bold" cutoff — no 500/600 face
+    const large = bold ? px >= 18.66 : px >= 24;
+    return {
+      threshold: large ? 3 : 4.5,
+      reason: `${large ? "large" : "normal"} text — role "${roleName}", ${px.toFixed(1)}px${bold ? " bold" : ""} — needs ${large ? 3 : 4.5}:1`,
+    };
+  }
+  const BOUNDARY = { threshold: 3, reason: "non-text UI boundary (WCAG 1.4.11) needs 3:1" };
+
+  // Every foreground/background pair the design can produce, classified by whether it's
+  // actually rendered anywhere. `render` builds a real, small instance of the pairing for
+  // the "contrast in context" gallery below — pairs without one are used but already
+  // visible elsewhere (the main Preview tab, or another example here), so they aren't
+  // duplicated as their own card.
+  const CONTRAST_PAIRS = [
+    {
+      id: "body-bg", label: "Body text on bg", used: true, ...textThresholdFor("body"),
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-primary"], p.semanticHex[b][m].bg),
+      render: () => h("p", { class: "text-body" }, "Body copy sits directly on the page background."),
+    },
+    {
+      id: "body-surface", label: "Body text on surface", used: true, ...textThresholdFor("body"),
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-primary"], p.semanticHex[b][m].surface),
+      render: () => h("div", { class: "pv-ctx-surface" }, h("p", { class: "text-body" }, "This panel sits on the surface token.")),
+    },
+    {
+      id: "secondary-surface-raised", label: "Secondary text on surface-raised", used: true, ...textThresholdFor("caption"),
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-secondary"], p.semanticHex[b][m]["surface-raised"]),
+      render: () => h("div", { class: "pv-ctx-surface-raised" }, h("p", { class: "text-caption" }, "Caption text on a raised panel.")),
+    },
+    {
+      id: "link-bg", label: "Link (accent-text) in a paragraph", used: true, ...textThresholdFor("body"),
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["accent-text"], p.semanticHex[b][m].bg),
+      render: () => h("p", { class: "text-body" }, "Read the ",
+        h("span", { style: "color: var(--color-accent-text);" }, "full case study"), " for details."),
+    },
+    {
+      id: "button-label", label: "Primary button label on accent fill", used: true, ...textThresholdFor("action"),
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-on-accent"], p.semanticHex[b][m].accent),
+      render: () => h("span", { class: "pv-button text-action" }, "Continue"),
+    },
+    {
+      id: "outline-border", label: "Outline button border", used: true, ...BOUNDARY,
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-primary"], p.semanticHex[b][m].bg),
+      render: () => h("span", { class: "pv-button ghost text-action" }, "Cancel"),
+    },
+    {
+      id: "card-border", label: "Card border on bg", used: true, ...BOUNDARY,
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["border-subtle"], p.semanticHex[b][m].bg),
+      render: () => h("div", { class: "pv-ctx-card" }, h("p", { class: "text-body-sm" }, "Card content.")),
+    },
+    {
+      id: "tag", label: "Tag on accent-subtle", used: true, ...textThresholdFor("label"),
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["accent-text"], p.semanticHex[b][m]["accent-subtle"]),
+      render: () => h("span", { class: "pv-tag text-label" }, "New"),
+    },
+    {
+      id: "status", label: "Status message (success)", used: true, ...textThresholdFor("body-sm"),
+      ratioFor: (b, m, p) => contrastRatio(p.scales.green[700], p.scales.green[100]),
+      render: () => h("div", { class: "pv-status-success text-body-sm" }, "Changes saved successfully."),
+    },
+    // Genuinely used, but already visible in the main Preview tab (labels/byline/footnote,
+    // and the button fill itself) — no separate card here to avoid duplicating a visual.
+    {
+      id: "secondary-bg", label: "Secondary text on bg (labels, byline)", used: true, ...textThresholdFor("body-sm"),
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-secondary"], p.semanticHex[b][m].bg),
+    },
+    {
+      id: "accent-fill-bg", label: "Accent fill on bg (the button itself)", used: true, ...BOUNDARY,
+      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m].accent, p.semanticHex[b][m].bg),
+      exceptionFor: (b, m, p) => m === "dark" && p.accentFillInfo[b].dark.exception,
+    },
+    // Not used anywhere in the design — classified so they can't quietly start "failing"
+    // and read as bugs. Nothing ever renders these combinations.
+    { id: "primary-accent", label: "text-primary on accent", used: false, ...textThresholdFor("body"),
+      reasonNotUsed: "text-primary never sits directly on an accent fill — that's what text-on-accent is for." },
+    { id: "secondary-surface", label: "text-secondary on surface", used: false, ...textThresholdFor("body-sm"),
+      reasonNotUsed: "no design use of secondary text directly on the surface token." },
+    { id: "secondary-accent", label: "text-secondary on accent", used: false, ...textThresholdFor("body-sm"),
+      reasonNotUsed: "secondary text never sits on an accent fill." },
+    { id: "accenttext-surface", label: "accent-text on surface", used: false, ...textThresholdFor("body"),
+      reasonNotUsed: "links/accented text render on bg, not on the surface token." },
+    { id: "accenttext-accent", label: "accent-text on accent", used: false, ...textThresholdFor("body"),
+      reasonNotUsed: "accent-colored text on an accent fill would be illegible by construction — never used." },
+    { id: "onaccent-bg", label: "text-on-accent on bg", used: false, ...textThresholdFor("action"),
+      reasonNotUsed: "text-on-accent is defined only for use on the accent fill itself." },
+    { id: "onaccent-surface", label: "text-on-accent on surface", used: false, ...textThresholdFor("action"),
+      reasonNotUsed: "same as above — only ever paired with accent." },
+  ];
 
   function renderContrastTable() {
     const palette = resolvePalette(colorConfig);
-    const table = h("table", { class: "pg-contrast-table" },
+    const usedPairs = CONTRAST_PAIRS.filter((p) => p.used);
+    const unusedPairs = CONTRAST_PAIRS.filter((p) => !p.used);
+
+    const usedTable = h("table", { class: "pg-contrast-table" },
       h("thead", {}, h("tr", {},
-        h("th", {}, "Text"), h("th", {}, "Background"),
+        h("th", {}, "Pair"), h("th", {}, "Threshold"),
         ...CONTRAST_COMBOS.map(([brand, mode]) => h("th", {}, `${brand} · ${mode}`)))),
-      h("tbody", {}, CONTRAST_TEXT_ROLES.flatMap((textRole) =>
-        CONTRAST_BG_ROLES.map((bgRole) =>
-          h("tr", {},
-            h("td", {}, textRole),
-            h("td", {}, bgRole),
-            ...CONTRAST_COMBOS.map(([brand, mode]) => {
-              const textHex = palette.semanticHex[brand][mode][textRole];
-              const bgHex = palette.semanticHex[brand][mode][bgRole];
-              const ratio = contrastRatio(textHex, bgHex);
-              const pass = ratio >= 4.5;
-              return h("td", {},
-                h("div", { class: "pg-contrast-swatch" },
-                  h("span", { class: "pg-contrast-dot", style: `background:${textHex};` }),
-                  h("span", { class: "pg-contrast-dot", style: `background:${bgHex};` }),
-                  `${ratio.toFixed(2)}:1`),
-                h("div", { class: pass ? "pg-pass" : "pg-fail" }, pass ? "AA pass" : "AA fail"));
-            }))))));
+      h("tbody", {}, usedPairs.map((pair) =>
+        h("tr", {},
+          h("td", {}, pair.label),
+          h("td", {}, `${pair.threshold}:1`, h("div", { class: "pg-note", style: "margin:2px 0 0;" }, pair.reason)),
+          ...CONTRAST_COMBOS.map(([brand, mode]) => {
+            const ratio = pair.ratioFor(brand, mode, palette);
+            const isException = pair.exceptionFor && pair.exceptionFor(brand, mode, palette);
+            const pass = ratio >= pair.threshold;
+            return h("td", {}, `${ratio.toFixed(2)}:1`,
+              h("div", { class: isException ? "pg-exception" : pass ? "pg-pass" : "pg-fail" },
+                isException ? "Known exception" : pass ? "AA pass" : "AA fail"));
+          })))));
+
+    const unusedTable = h("table", { class: "pg-contrast-table" },
+      h("thead", {}, h("tr", {}, h("th", {}, "Pair"), h("th", {}, "Threshold"), h("th", {}, "Why it's not used"))),
+      h("tbody", {}, unusedPairs.map((pair) =>
+        h("tr", {}, h("td", {}, pair.label), h("td", {}, `${pair.threshold}:1`), h("td", {}, pair.reasonNotUsed)))));
+
+    const contextExamples = usedPairs.filter((p) => p.render).map((pair) =>
+      h("div", { class: "pg-ctx-example" },
+        h("div", { class: "pg-ctx-example-label" }, `${pair.label} — ${pair.threshold}:1`),
+        h("div", { class: "pg-ctx-grid" },
+          CONTRAST_COMBOS.map(([brand, mode]) => {
+            const ratio = pair.ratioFor(brand, mode, palette);
+            return h("div", { class: "pg-color-frame-body pg-ctx-cell", "data-brand": brand, "data-mode": mode },
+              pair.render(),
+              h("div", { class: "pg-ctx-ratio" }, `${brand} · ${mode} — ${ratio.toFixed(2)}:1`));
+          }))));
+
     $("colorStage").replaceChildren(
-      h("div", { class: "pg-contrast-wrap" }, table),
-      h("p", { class: "pg-note" }, "AA thresholds: 4.5:1 for normal text (shown above). Large text and UI borders/components need only 3:1."));
+      h("p", { class: "pg-group-title" }, `Used pairs (${usedPairs.length})`),
+      h("div", { class: "pg-contrast-wrap" }, usedTable),
+      h("details", { class: "pg-note" },
+        h("summary", {}, `Not used (${unusedPairs.length}) — the design never renders these, so they can't read as failures`),
+        h("div", { class: "pg-contrast-wrap" }, unusedTable)),
+      h("p", { class: "pg-group-title", style: "margin-top: 8px;" }, "Contrast in context"),
+      h("p", { class: "pg-note" }, "One real component per used pair with its own example — the ratio matches the row above."),
+      ...contextExamples);
   }
 
   // ---------- mode dispatch ----------
