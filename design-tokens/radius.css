@@ -1,0 +1,36 @@
+/* Radius tokens. Generated from radius.config.js — do not edit by hand. */
+
+:root {
+  /* Scale */
+  --radius-0: 0rem; /* 0px */
+  --radius-2: 0.125rem; /* 2px */
+  --radius-4: 0.25rem; /* 4px */
+  --radius-8: 0.5rem; /* 8px */
+  --radius-12: 0.75rem; /* 12px */
+  --radius-16: 1rem; /* 16px */
+  --radius-24: 1.5rem; /* 24px */
+  --radius-full: 9999px;
+
+  /* Nested radius: a role's own radius minus one padding step, floored at 0 so an
+     inner element's curve never goes negative when its parent's radius is small.
+     Depends on --space-8 from spacing.config.js — load spacing.css alongside this. */
+  --radius-nested-card: max(calc(var(--radius-card) - var(--space-8)), 0rem);
+}
+
+:root, [data-brand="portfolio"] {
+  /* portfolio */
+  --radius-control: var(--radius-2);
+  --radius-card: var(--radius-4);
+  --radius-surface: var(--radius-8);
+  --radius-media: var(--radius-0);
+  --radius-pill: var(--radius-full);
+}
+
+[data-brand="feelscience"] {
+  /* feelscience */
+  --radius-control: var(--radius-full);
+  --radius-card: var(--radius-16);
+  --radius-surface: var(--radius-24);
+  --radius-media: var(--radius-12);
+  --radius-pill: var(--radius-full);
+}
