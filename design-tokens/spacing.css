@@ -1,0 +1,34 @@
+/* Spacing tokens. Generated from spacing.config.js — do not edit by hand. */
+
+:root {
+  /* Scale — base unit 4px */
+  --space-0: 0rem; /* 0px */
+  --space-2: 0.125rem; /* 2px */
+  --space-4: 0.25rem; /* 4px */
+  --space-8: 0.5rem; /* 8px */
+  --space-12: 0.75rem; /* 12px */
+  --space-16: 1rem; /* 16px */
+  --space-24: 1.5rem; /* 24px */
+  --space-32: 2rem; /* 32px */
+  --space-48: 3rem; /* 48px */
+  --space-64: 4rem; /* 64px */
+  --space-96: 6rem; /* 96px */
+  --space-128: 8rem; /* 128px */
+  --space-192: 12rem; /* 192px */
+
+  /* Fluid: 360px → 1280px */
+  --space-container-gutter: clamp(1rem, 0.6087rem + 1.7391vw, 2rem); /* 16px → 32px */
+  --space-section-gap: clamp(3rem, 1.8261rem + 5.2174vw, 6rem); /* 48px → 96px */
+
+  /* Semantic roles */
+  --space-stack-tight: var(--space-8);
+  --space-stack: var(--space-16);
+  --space-stack-loose: var(--space-32);
+  --space-inline: var(--space-12);
+  --space-card-padding: var(--space-24);
+
+  /* Text flow (em) */
+  --space-paragraph-gap: 0.75em;
+  --space-heading-space-before: 1.5em;
+  --space-heading-space-after: 0.5em;
+}
