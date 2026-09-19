@@ -8,8 +8,14 @@
 <script src="generate-css.js"></script>
 <script src="color.config.js"></script>
 <script src="generate-color-css.js"></script>
-<style id="tokens"></style>
+<script src="spacing.config.js"></script>
+<script src="generate-spacing-css.js"></script>
+<script src="radius.config.js"></script>
+<script src="generate-radius-css.js"></script>
+<style id="typographyTokens"></style>
 <style id="colorTokens"></style>
+<style id="spacingTokens"></style>
+<style id="radiusTokens"></style>
 <style>
   /* ---------- Playground chrome (deliberately independent of the tokens) ---------- */
   * { box-sizing: border-box; }
@@ -30,10 +36,10 @@
   }
   .pg-panel header { padding: 16px 18px 12px; border-bottom: 1px solid #ececef; }
   .pg-panel h1 { font-size: 15px; margin: 0 0 10px; }
-  .pg-modeswitch { display: flex; gap: 4px; margin: 0 0 12px; }
+  .pg-modeswitch { display: flex; gap: 4px; margin: 0 0 12px; flex-wrap: wrap; }
   .pg-modeswitch button {
     flex: 1; border: 1px solid #d9d9de; background: #f6f6f8; border-radius: 6px;
-    padding: 6px 8px; cursor: pointer; font-size: 12px; font-weight: 600;
+    padding: 6px 8px; cursor: pointer; font-size: 12px; font-weight: 600; min-width: 70px;
   }
   .pg-modeswitch button[aria-current="true"] { background: #1d1d1f; border-color: #1d1d1f; color: #fff; }
   .pg-stepnav { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -88,22 +94,59 @@
   .pg-tabs { display: flex; gap: 2px; background: #e3e3e8; padding: 2px; border-radius: 7px; }
   .pg-tabs button { border: 0; background: transparent; padding: 4px 10px; border-radius: 5px; cursor: pointer; }
   .pg-tabs button[aria-selected="true"] { background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  [hidden] { display: none !important; }
   .pg-toolbar label { display: flex; gap: 6px; align-items: center; color: #3a3a3c; }
+  .pg-toolbar select { border: 1px solid #d9d9de; border-radius: 6px; padding: 3px 6px; background: #fff; }
   .pg-toolbar output { font-variant-numeric: tabular-nums; color: #6e6e73; min-width: 56px; }
 
   .pg-stage { flex: 1; overflow: auto; padding: 24px; }
-  .pg-frame {
+
+  /* ---------- Frames: the shared "Context" preview ---------- */
+  .pg-frames-outer { container-type: inline-size; margin: 0 auto; width: 100%; }
+  .pg-frames { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .pg-frames.pg-frames-single { grid-template-columns: 1fr; }
+  @media (max-width: 900px) {
+    .pg-frames { grid-template-columns: 1fr; }
+  }
+  .pg-frame2 {
     container-type: inline-size;
-    width: 100%; margin: 0 auto;
+    border-radius: 10px; overflow: hidden; border: 1px solid #d9d9de;
     background: var(--pv-bg); color: var(--pv-fg);
-    border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.1);
     --pv-bg: #ffffff; --pv-fg: #16161a; --pv-muted: #5c5c66; --pv-line: #e4e4ea; --pv-soft: #f3f3f6; --pv-accent: #2f5bea;
   }
-  .pg-frame.dark {
-    --pv-bg: #141417; --pv-fg: #ededf0; --pv-muted: #9d9da8; --pv-line: #2c2c33; --pv-soft: #1e1e23; --pv-accent: #8aa4ff;
+  .pg-frame2-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 14px; font-size: 12px; font-weight: 600; background: #f6f6f8;
   }
+  .pg-frame2-body { background: var(--color-bg); color: var(--color-text-primary); }
+  .pg-frame2-body .pv-hero .text-body-lg,
+  .pg-frame2-body .pv-byline,
+  .pg-frame2-body .pv-figure figcaption,
+  .pg-frame2-body .pv-footnote,
+  .pg-frame2-body .pv-card .text-body-sm { color: var(--color-text-secondary); }
+  .pg-frame2-body .text-label { color: var(--color-text-secondary); }
+  .pg-frame2-body .pv-eyebrow { color: var(--color-accent-text); }
+  .pg-frame2-body .pv-figure-img { background: linear-gradient(135deg, var(--color-surface-raised), var(--color-border-subtle)); }
+  .pg-frame2-body .pv-code { background: var(--color-surface-raised); }
+  .pg-frame2-body .pv-card { border-color: var(--color-border-subtle); }
+  .pg-frame2-body .pv-spec-row,
+  .pg-frame2-body .pv-ladder-row,
+  .pg-frame2-body .pv-article,
+  .pg-frame2-body .pv-footnote { border-color: var(--color-border-subtle); }
+  /* No border override for the primary — it stays transparent, and dark-mode
+     legibility comes from picking a lighter fill step entirely (see accentFillStep
+     in generate-color-css.js), not from an added border. */
+  .pg-frame2-body .pv-button { background: var(--color-accent); color: var(--color-text-on-accent); }
+  .pg-frame2-body .pv-button.ghost { background: transparent; color: var(--color-text-primary); }
+  .pg-frame2-body [contenteditable]:focus { box-shadow: 0 0 0 2px var(--color-focus-ring); }
+  .pg-frame2-body .pv-ctx-surface-raised { background: var(--color-surface-raised); padding: 10px 12px; border-radius: var(--radius-media, 8px); }
+  .pg-frame2-body .pv-tag { background: var(--color-accent-subtle); color: var(--color-accent-text); }
+  .pg-frame2-body .pv-status-success { background: var(--color-green-100); color: var(--color-green-700); }
+  .pg-frame2-body .pv-modal { background: var(--color-surface); }
+  .pg-frame2-body .pv-input { background: var(--color-surface); color: var(--color-text-primary); border-color: var(--color-border-strong); }
 
-  /* ---------- Preview content (uses the tokens) ---------- */
+  /* ---------- Preview content — typography, spacing and radius tokens apply here
+     directly and unconditionally, regardless of which dimension is being edited. ---------- */
   .pv { padding: clamp(20px, 5cqi, 56px); }
   .pv * { margin: 0; }
   [contenteditable] { outline: none; }
@@ -132,52 +175,53 @@
     .pv-ladder-row { grid-template-columns: 1fr; gap: 4px; }
   }
 
-  .pv-context { display: grid; gap: clamp(40px, 8cqi, 96px); }
-  .pv-hero { display: grid; gap: 20px; }
+  .pv-context { display: grid; gap: var(--space-section-gap, clamp(40px, 8cqi, 96px)); }
+  .pv-hero { display: grid; gap: var(--space-stack, 20px); }
   .pv-hero .text-display { max-width: 16ch; }
   .pv-hero .text-body-lg { max-width: var(--measure); color: var(--pv-muted); }
   .pv-eyebrow { color: var(--pv-accent); }
-  .pv-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+  .pv-actions { display: flex; gap: var(--space-inline, 12px); flex-wrap: wrap; margin-top: var(--space-stack-tight, 8px); }
   .pv-button {
-    display: inline-block; border-radius: 999px;
+    display: inline-block; border-radius: var(--radius-control, 999px);
     background: var(--pv-fg); color: var(--pv-bg);
     /* Sentence-case button text has no descenders, so the line box's reserved descender
        space pushes it visually toward the top — trim to the glyphs themselves where
        supported, and fall back to slightly more top padding than bottom elsewhere. */
     text-box: trim-both cap alphabetic;
     padding: 0.85em 1.25em 0.8em;
-    /* If a button ever carries letter-spacing again, reduce padding-right by that amount —
-       tracking adds a trailing space after the last glyph that otherwise pushes the
-       label off-center. .text-action has zero tracking, so no compensation is needed now. */
-    /* No visible border on the primary — the fill itself must carry enough contrast to
-       read (see accentFillStep in generate-color-css.js). Transparent border only,
-       so it's exactly the same box size as the outline button below. */
     border: 1.5px solid transparent;
   }
   /* currentColor ties the border to whatever the label color already is, so they can
      never drift apart — no separate border-color token to keep in sync. */
   .pv-button.ghost { background: transparent; color: var(--pv-fg); border: 1.5px solid currentColor; }
+  .pv-input { border-radius: var(--radius-control, 6px); border: 1px solid var(--pv-line); padding: 8px 12px; font: inherit; background: var(--pv-bg); color: var(--pv-fg); width: 100%; }
+  .pv-tag { display: inline-block; padding: 3px 10px; border-radius: var(--radius-pill, 999px); background: var(--pv-soft); }
+  .pv-modal { border-radius: var(--radius-surface, 12px); border: 1px solid var(--pv-line); padding: 20px; background: var(--pv-bg); box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+  .pv-controls { display: flex; flex-direction: column; gap: var(--space-stack, 16px); align-items: flex-start; }
+  .pv-controls .pv-modal, .pv-controls .pv-ctx-surface-raised, .pv-controls .pv-status-success { width: 100%; }
 
-  .pv-article { display: grid; gap: 1em; max-width: var(--measure); }
+  .pv-article { display: grid; gap: var(--space-paragraph-gap, 1em); max-width: var(--measure); }
   .pv-article > .text-heading-lg { margin-bottom: 0.1em; }
-  .pv-article > .text-heading-md { margin-top: 1.2em; }
-  .pv-article > .text-heading-sm { margin-top: 0.8em; }
+  .pv-article > .text-heading-md { margin-top: var(--space-heading-space-before, 1.2em); }
+  .pv-article > .text-heading-sm { margin-top: var(--space-heading-space-before, 0.8em); }
   .pv-byline { color: var(--pv-muted); }
   .pv-figure { display: grid; gap: 10px; margin: 0.8em 0; }
   .pv-figure-img {
-    aspect-ratio: 16 / 9; max-width: 100%; border-radius: 8px;
+    aspect-ratio: 16 / 9; max-width: 100%; border-radius: var(--radius-media, 8px);
     background: linear-gradient(135deg, var(--pv-soft), var(--pv-line));
   }
   .pv-figure figcaption { color: var(--pv-muted); }
-  .pv-code { background: var(--pv-soft); padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; }
-  .pv-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
-  .pv-card { display: grid; gap: 8px; padding: 20px; border: 1px solid var(--pv-line); border-radius: 10px; align-content: start; }
+  .pv-code { background: var(--pv-soft); padding: 14px 16px; border-radius: var(--radius-media, 8px); overflow-x: auto; white-space: pre; }
+  .pv-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-stack, 16px); }
+  .pv-card { display: grid; gap: var(--space-stack-tight, 8px); padding: var(--space-card-padding, 20px); border: 1px solid var(--pv-line); border-radius: var(--radius-card, 10px); align-content: start; }
   .pv-card .text-body-sm { color: var(--pv-muted); }
   .pv-footnote { color: var(--pv-muted); border-top: 1px solid var(--pv-line); padding-top: 1em; }
+  .pv-ctx-surface-raised { background: var(--pv-soft); padding: 10px 12px; border-radius: var(--radius-media, 8px); }
+  .pv-status-success { padding: 10px 12px; border-radius: var(--radius-media, 8px); background: var(--pv-soft); }
 
   dialog { border: 0; border-radius: 12px; padding: 0; width: min(760px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
   dialog::backdrop { background: rgba(0,0,0,.35); }
-  .pg-dialog-head { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #ececef; }
+  .pg-dialog-head { display: flex; gap: 8px; align-items: center; padding: 12px 16px; border-bottom: 1px solid #ececef; flex-wrap: wrap; }
   .pg-dialog-body { padding: 12px 16px 16px; }
   .pg-dialog-body p { margin: 0 0 8px; color: #6e6e73; }
   .pg-dialog-body code { background: #f3f3f6; padding: 1px 4px; border-radius: 4px; }
@@ -193,80 +237,42 @@
     .pg-stage { padding: 16px; }
   }
 
-  /* ---------- Color step controls ---------- */
+  /* ---------- Color step controls (swatches) ---------- */
   .pg-swatchrow { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 14px; }
-  .pg-swatch { width: 100%; }
-  .pg-swatch-chip {
-    width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(0,0,0,.1);
-  }
+  .pg-swatch-chip { width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(0,0,0,.1); }
   .pg-swatch-label { font-size: 10px; color: #6e6e73; text-align: center; margin-top: 3px; }
 
-  /* ---------- Color preview: dual frames ---------- */
-  .pg-color-frames { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media (max-width: 900px) {
-    .pg-color-frames { grid-template-columns: 1fr; }
-  }
-  .pg-color-frame { border-radius: 10px; overflow: hidden; border: 1px solid #d9d9de; }
-  .pg-color-frame-head {
-    display: flex; align-items: center; justify-content: space-between; gap: 8px;
-    padding: 8px 14px; font-size: 12px; font-weight: 600; background: #f6f6f8;
-  }
-  .pg-color-frame-body { background: var(--color-bg); color: var(--color-text-primary); }
-  .pg-color-frame-body .pv-hero .text-body-lg,
-  .pg-color-frame-body .pv-byline,
-  .pg-color-frame-body .pv-figure figcaption,
-  .pg-color-frame-body .pv-footnote,
-  .pg-color-frame-body .pv-card .text-body-sm { color: var(--color-text-secondary); }
-  .pg-color-frame-body .text-label { color: var(--color-text-secondary); }
-  .pg-color-frame-body .pv-eyebrow { color: var(--color-accent-text); }
-  .pg-color-frame-body .pv-figure-img { background: linear-gradient(135deg, var(--color-surface-raised), var(--color-border-subtle)); }
-  .pg-color-frame-body .pv-code { background: var(--color-surface-raised); }
-  .pg-color-frame-body .pv-card { border-color: var(--color-border-subtle); }
-  .pg-color-frame-body .pv-spec-row,
-  .pg-color-frame-body .pv-ladder-row,
-  .pg-color-frame-body .pv-article,
-  .pg-color-frame-body .pv-footnote { border-color: var(--color-border-subtle); }
-  /* No border override for the primary here — it stays the base rule's transparent
-     1.5px, and dark-mode legibility comes from picking a lighter fill step entirely
-     (see accentFillStep in generate-color-css.js), not from an added border. */
-  .pg-color-frame-body .pv-button { background: var(--color-accent); color: var(--color-text-on-accent); }
-  .pg-color-frame-body .pv-button.ghost { background: transparent; color: var(--color-text-primary); }
-  .pg-color-frame-body [contenteditable]:focus { box-shadow: 0 0 0 2px var(--color-focus-ring); }
-
-  /* ---------- Contrast table ---------- */
+  /* ---------- Contrast table (color Inspect) ---------- */
   .pg-contrast-table { width: 100%; border-collapse: collapse; font-size: 12px; }
   .pg-contrast-table th, .pg-contrast-table td {
     border: 1px solid #d9d9de; padding: 6px 10px; text-align: left; vertical-align: middle;
   }
   .pg-contrast-table th { background: #f6f6f8; }
-  .pg-contrast-swatch {
-    display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums;
-  }
-  .pg-contrast-dot { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(0,0,0,.15); flex-shrink: 0; }
+  .pg-contrast-table td:first-child { max-width: 220px; }
   .pg-pass { color: #1f7a3a; font-weight: 700; }
   .pg-fail { color: #c0392b; font-weight: 700; }
   .pg-exception { color: #b25000; font-weight: 700; }
   .pg-contrast-wrap { overflow-x: auto; }
-  .pg-contrast-table td:first-child { max-width: 220px; }
-
-  /* ---------- Contrast in context ---------- */
-  .pg-ctx-example { margin: 0 0 22px; }
-  .pg-ctx-example-label { font-size: 12px; font-weight: 700; margin: 0 0 8px; color: #3a3a3c; }
-  .pg-ctx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-  @media (max-width: 900px) {
-    .pg-ctx-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-  .pg-ctx-cell { border-radius: 10px; padding: 14px; }
-  .pg-ctx-ratio { margin-top: 10px; font-size: 11px; opacity: 0.75; font-variant-numeric: tabular-nums; }
   details.pg-note { color: inherit; font-size: 12px; margin: 10px 0 18px; }
   details.pg-note summary { cursor: pointer; color: #3a3a3c; font-weight: 600; margin-bottom: 8px; }
 
-  /* Components used only by the "contrast in context" examples above. */
-  .pg-color-frame-body .pv-ctx-surface { background: var(--color-surface); padding: 10px 12px; border-radius: 8px; }
-  .pg-color-frame-body .pv-ctx-surface-raised { background: var(--color-surface-raised); padding: 10px 12px; border-radius: 8px; }
-  .pg-color-frame-body .pv-ctx-card { border: 1px solid var(--color-border-subtle); border-radius: 8px; padding: 10px 12px; }
-  .pg-color-frame-body .pv-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--color-accent-subtle); color: var(--color-accent-text); }
-  .pg-color-frame-body .pv-status-success { padding: 10px 12px; border-radius: 8px; background: var(--color-green-100); color: var(--color-green-700); }
+  /* ---------- Annotate overlay (shared mechanism for all four dimensions) ---------- */
+  /* Each dim's annotate(root) sets data-annotate="<label>" on the elements it cares
+     about; this is the one CSS rule that renders whatever label was set. */
+  .pg-annotate-active [data-annotate] {
+    position: relative;
+    outline: 1px dashed var(--pv-accent);
+    outline-offset: 3px;
+  }
+  .pg-annotate-active [data-annotate]::after {
+    content: attr(data-annotate);
+    position: absolute; top: 0; left: 0; z-index: 5;
+    transform: translate(3px, calc(-100% - 3px));
+    font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--pv-bg); background: var(--pv-accent);
+    padding: 1px 5px; border-radius: 3px; pointer-events: none;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -275,8 +281,10 @@
     <header>
       <h1>Design Foundations Playground</h1>
       <div class="pg-modeswitch" id="modeswitch">
-        <button data-mode="typography">Typography</button>
-        <button data-mode="color">Color</button>
+        <button data-dim="typography">Typography</button>
+        <button data-dim="color">Color</button>
+        <button data-dim="spacing">Spacing</button>
+        <button data-dim="radius">Radius</button>
       </div>
       <nav class="pg-stepnav" id="stepnav" aria-label="Steps"></nav>
     </header>
@@ -293,33 +301,43 @@
 
   <main class="pg-main">
     <div class="pg-toolbar">
-      <div class="pg-tabs" role="tablist" id="tabs"></div>
-      <div class="pg-toolbar-extra" id="toolbarExtra" style="display: contents;">
-        <label>Width
-          <input type="range" id="width" min="320" max="1600" step="10">
-          <output id="widthOut"></output>
-        </label>
-        <label><input type="checkbox" id="fit"> Fit</label>
-        <label><input type="checkbox" id="dark"> Dark</label>
+      <div class="pg-tabs" role="tablist" id="stageSwitch">
+        <button data-stage="context" aria-selected="true">Context</button>
+        <button data-stage="inspect">Inspect</button>
       </div>
+      <label id="sceneSelectLabel">Scene
+        <select id="sceneSelect"></select>
+      </label>
+      <label id="framesPresetLabel">Frames
+        <select id="framesPreset"></select>
+      </label>
+      <span id="inspectThemeLabel" style="display: flex; gap: 14px;" hidden>
+        <label>Brand
+          <select id="inspectBrand"></select>
+        </label>
+        <label>Mode
+          <select id="inspectMode"></select>
+        </label>
+      </span>
+      <label>Width
+        <input type="range" id="width" min="320" max="1600" step="10">
+        <output id="widthOut"></output>
+      </label>
+      <label><input type="checkbox" id="fit"> Fit</label>
+      <label id="annotateLabel"><input type="checkbox" id="annotate"> Annotate</label>
     </div>
     <div class="pg-stage" id="stage">
-      <div class="pg-frame" id="frame">
-        <div class="pv" id="preview"></div>
+      <div class="pg-frames-outer" id="stageContext">
+        <div id="frames"></div>
       </div>
-      <div id="colorStage" hidden></div>
+      <div id="stageInspect" hidden></div>
     </div>
   </main>
 </div>
 
 <dialog id="exportDialog">
   <div class="pg-dialog-head">
-    <div class="pg-tabs" id="exportTabs">
-      <button data-export="type-config" aria-selected="true">typography.config.js</button>
-      <button data-export="type-css">typography.css</button>
-      <button data-export="color-config">color.config.js</button>
-      <button data-export="color-css">color.css</button>
-    </div>
+    <div class="pg-tabs" id="exportTabs"></div>
     <span class="pg-spacer"></span>
     <button class="pg-btn primary" id="copy">Copy</button>
     <button class="pg-btn" id="closeExport">Close</button>
@@ -330,976 +348,15 @@
   </div>
 </dialog>
 
+<script src="playground/shell.js"></script>
+<script src="playground/scenes.js"></script>
+<script src="playground/frames.js"></script>
+<script src="playground/dim-typography.js"></script>
+<script src="playground/dim-color.js"></script>
+<script src="playground/dim-spacing.js"></script>
+<script src="playground/dim-radius.js"></script>
 <script>
-(() => {
-  const STORAGE_KEY = "design-foundations-playground:v1";
-  const DEFAULTS = structuredClone(TYPE_CONFIG);
-  const ROLES = Object.keys(DEFAULTS.roles);
-  const COLOR_DEFAULTS = structuredClone(COLOR_CONFIG);
-
-  const RATIOS = [
-    [1.067, "Minor second"], [1.125, "Major second"], [1.2, "Minor third"], [1.25, "Major third"],
-    [1.333, "Perfect fourth"], [1.414, "Augmented fourth"], [1.5, "Perfect fifth"], [1.618, "Golden ratio"],
-  ];
-
-  const SAMPLES = {
-    display: "Calm interfaces for complex science",
-    "display-editorial": "The quiet architecture of trust",
-    "heading-lg": "Designing for how people actually feel",
-    "heading-md": "What the research tells us",
-    "heading-sm": "Methods and participants",
-    "body-lg": "A short introduction that sets up the story and invites the reader to keep going.",
-    body: "Body copy carries most of the reading. It needs a comfortable size, generous line height and a measure that keeps lines from running too long. Ação, coração, 38 °C, ±0.5 µg, H₂O, 10⁶.",
-    prose: [
-      "Long-form reading text favors a serif at a relaxed line height, so paragraphs stay comfortable across a wide measure. ",
-      h("em", {}, "This sentence is set in italic to check the serif's italic face."),
-      " The rest returns to upright text so the two can be compared side by side.",
-    ],
-    "body-sm": "Secondary information, metadata and supporting details — 12 min read · Sep 2026.",
-    caption: "Figure 2. Heart-rate variability across participants (n = 48, p < 0.05).",
-    label: "Read case study",
-    mono: "const hrv = rmssd(intervals); // 42.7 ms",
-  };
-
-  // ---------- state ----------
-  const store = {
-    get(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
-    set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} },
-  };
-
-  // Only keep stored values whose keys still exist in the config file.
-  function mergeKnown(defaults, saved) {
-    if (Array.isArray(defaults)) return Array.isArray(saved) ? saved : structuredClone(defaults);
-    if (saved === null || typeof saved !== typeof defaults) return structuredClone(defaults);
-    if (typeof defaults !== "object") return saved;
-    const result = {};
-    for (const key of Object.keys(defaults)) result[key] = mergeKnown(defaults[key], saved[key]);
-    return result;
-  }
-
-  // A cheap hash of a config file's current contents. Saved alongside the user's edited
-  // copy; if the file changes (a role added, a shape changed, a font swapped) the
-  // fingerprint no longer matches and the stale saved copy is discarded instead of
-  // silently shadowing the new file contents.
-  function fingerprintOf(value) {
-    const str = JSON.stringify(value);
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
-    return hash.toString(36);
-  }
-
-  const TYPE_FINGERPRINT = fingerprintOf(DEFAULTS);
-  const COLOR_FINGERPRINT = fingerprintOf(COLOR_DEFAULTS);
-
-  function restoreSection(defaults, fingerprint, savedSection) {
-    if (!savedSection || savedSection.fingerprint !== fingerprint) return structuredClone(defaults);
-    return mergeKnown(defaults, savedSection.config ?? null);
-  }
-
-  const savedRaw = store.get(STORAGE_KEY) || {};
-  let config = restoreSection(DEFAULTS, TYPE_FINGERPRINT, savedRaw.typography);
-  // Font files and families are static assets from typography.config.js — never let a
-  // stale/edited copy from localStorage shadow them.
-  config.fonts = structuredClone(DEFAULTS.fonts);
-  let colorConfig = restoreSection(COLOR_DEFAULTS, COLOR_FINGERPRINT, savedRaw.color);
-  const ui = {
-    mode: savedRaw.ui?.mode ?? "typography",
-    step: savedRaw.ui?.step ?? 0,
-    tab: savedRaw.ui?.tab ?? "scale",
-    width: savedRaw.ui?.width ?? 1100,
-    fit: savedRaw.ui?.fit ?? true,
-    dark: savedRaw.ui?.dark ?? false,
-  };
-  const colorUi = {
-    step: savedRaw.colorUi?.step ?? 0,
-    tab: savedRaw.colorUi?.tab ?? "preview",
-    frameMode: {
-      a: savedRaw.colorUi?.frameMode?.a ?? "light",
-      b: savedRaw.colorUi?.frameMode?.b ?? "dark",
-    },
-  };
-  const $ = (id) => document.getElementById(id);
-  function h(tag, props = {}, ...children) {
-    const node = document.createElement(tag);
-    for (const [k, v] of Object.entries(props)) {
-      if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
-      else if (k === "class") node.className = v;
-      else if (v !== undefined && v !== null && v !== false) node.setAttribute(k, v);
-    }
-    node.append(...children.flat().filter((c) => c !== null && c !== undefined));
-    return node;
-  }
-
-  // ---------- controls ----------
-  let uid = 0;
-  function row(label, control) {
-    const id = `f${++uid}`;
-    const first = control.querySelector("input, select");
-    if (first) first.id = id;
-    return h("div", { class: "pg-row" }, h("label", { for: id, title: label }, label), control);
-  }
-
-  function slider(value, { min, max, step }, onChange) {
-    const range = h("input", { type: "range", min, max, step, value });
-    const num = h("input", { type: "number", min, max, step, value });
-    const commit = (v, from) => {
-      if (v === "" || Number.isNaN(Number(v))) return;
-      if (from !== range) range.value = v;
-      if (from !== num) num.value = v;
-      onChange(Number(v));
-    };
-    range.addEventListener("input", () => commit(range.value, range));
-    num.addEventListener("input", () => commit(num.value, num));
-    return h("div", { class: "pg-control" }, range, num);
-  }
-
-  function number(value, attrs, onChange) {
-    return h("div", { class: "pg-control" },
-      h("input", { type: "number", value, ...attrs, oninput: (e) => e.target.value !== "" && onChange(Number(e.target.value)) }));
-  }
-
-  function text(value, placeholder, onChange) {
-    return h("div", { class: "pg-control" },
-      h("input", { type: "text", value, placeholder, oninput: (e) => onChange(e.target.value) }));
-  }
-
-  function select(value, options, onChange) {
-    const sel = h("select", { onchange: (e) => onChange(e.target.value) },
-      options.map(([v, label]) => h("option", { value: v, selected: String(v) === String(value) }, label)));
-    return h("div", { class: "pg-control" }, sel);
-  }
-
-  function checkbox(checked, onChange) {
-    return h("div", { class: "pg-control" },
-      h("input", { type: "checkbox", checked, onchange: (e) => onChange(e.target.checked) }));
-  }
-
-  function ratioControl(value, onChange) {
-    const wrap = slider(value, { min: 1, max: 1.8, step: 0.001 }, onChange);
-    const sel = h("select", {
-      onchange: (e) => {
-        if (!e.target.value) return;
-        wrap.querySelectorAll("input").forEach((i) => (i.value = e.target.value));
-        onChange(Number(e.target.value));
-      },
-    }, h("option", { value: "" }, "Presets…"), RATIOS.map(([r, name]) => h("option", { value: r }, `${r} · ${name}`)));
-    wrap.querySelector("input[type=range]").replaceWith(sel);
-    return wrap;
-  }
-
-  const px = (n) => `${Number(n.toFixed(2))}px`;
-  const group = (title, ...rows) => h("div", { class: "pg-group" }, h("p", { class: "pg-group-title" }, title), ...rows);
-  const roleRows = (build) => ROLES.map((name) => row(name, build(config.roles[name], name)));
-
-  // ---------- steps ----------
-  const STEPS = [
-    {
-      title: "1 · Scale",
-      tab: "scale",
-      hint: "Pick a <b>base size</b> for body text and a <b>ratio</b> between steps. Small ratios (1.125–1.2) suit dense, reading-heavy UIs; larger ones (1.25–1.333) give more dramatic headings.",
-      render: () => [
-        group("Scale",
-          row("Base (px)", slider(config.scale.base, { min: 12, max: 24, step: 0.5 }, (v) => update(() => (config.scale.base = v)))),
-          row("Ratio", ratioControl(config.scale.ratio, (v) => update(() => (config.scale.ratio = v))))),
-      ],
-    },
-    {
-      title: "2 · Mapping",
-      tab: "specimen",
-      hint: "Assign each role to a step on the scale. Roles can share a step and still differ through weight, line height or case.",
-      render: () => [
-        group("Step per role",
-          ...roleRows((role) => select(role.step,
-            SCALE_STEPS.map((s) => [s, `${s > 0 ? "+" : ""}${s}  ·  ${px(stepPx(config, s).max)}`]),
-            (v) => update(() => (role.step = Number(v)))))),
-      ],
-    },
-    {
-      title: "3 · Fonts & weight",
-      tab: "specimen",
-      hint: "Faces load automatically from <b>design-tokens/fonts/</b>, as listed in typography.config.js. Static fonts are limited to their available weights; variable fonts allow any weight in their range.",
-      render: () => [
-        ...["sans", "mono", "serif"].map((slot) => group(`${slot} font`,
-          row("Family", text(config.fonts[slot].family, "e.g. Inter", (v) => update(() => (config.fonts[slot].family = v.trim())))),
-          ...facesList(slot))),
-        group("Weight per role",
-          ...roleRows((role) => {
-            const range = weightRangeOf(role.font);
-            return range
-              ? slider(role.weight, { min: range[0], max: range[1], step: 1 }, (v) => update(() => (role.weight = v)))
-              : select(role.weight, weightsFor(role.font).map((w) => [w, w]), (v) => update(() => (role.weight = Number(v))));
-          })),
-        group("Font per role",
-          ...roleRows((role) => select(role.font, [["sans", "sans"], ["mono", "mono"], ["serif", "serif"]], (v) => update(() => {
-            role.font = v;
-            const range = weightRangeOf(v);
-            if (range) {
-              role.weight = Math.min(Math.max(role.weight, range[0]), range[1]);
-            } else {
-              const avail = weightsFor(v);
-              if (!avail.includes(role.weight)) role.weight = nearestWeight(avail, role.weight);
-            }
-          })))),
-      ],
-    },
-    {
-      title: "4 · Line height",
-      tab: "context",
-      hint: "Headings usually want tight line height (1.05–1.25); body text needs more (1.45–1.7). <b>Measure</b> caps the line length of running text.",
-      render: () => [
-        group("Line height per role",
-          ...roleRows((role) => slider(role.lineHeight, { min: 0.9, max: 2, step: 0.05 }, (v) => update(() => (role.lineHeight = v))))),
-        group("Measure",
-          row("Max width (ch)", slider(parseFloat(config.measure), { min: 40, max: 90, step: 1 }, (v) => update(() => (config.measure = `${v}ch`))))),
-      ],
-    },
-    {
-      title: "5 · Letter spacing",
-      tab: "specimen",
-      hint: "Large type usually looks better slightly tightened (negative em). Small uppercase labels need positive tracking to stay legible.",
-      render: () => [
-        group("Tracking per role (em)",
-          ...roleRows((role) => slider(role.tracking, { min: -0.06, max: 0.2, step: 0.005 }, (v) => update(() => (role.tracking = v))))),
-        group("Case",
-          ...roleRows((role) => select(role.transform,
-            [["none", "none"], ["uppercase", "UPPERCASE"], ["lowercase", "lowercase"], ["capitalize", "Capitalize"]],
-            (v) => update(() => (role.transform = v))))),
-      ],
-    },
-    {
-      title: "6 · Responsive",
-      tab: "context",
-      hint: "Turn on fluid sizing so large steps shrink on small screens while body text barely changes. Drag the <b>Width</b> slider above the preview to test.",
-      render: () => {
-        const f = config.scale.fluid;
-        return [
-          group("Fluid type",
-            row("Enabled", checkbox(f.enabled, (v) => update(() => (f.enabled = v))))),
-          group(`Mobile (at ${f.minViewport}px and below)`,
-            row("Viewport", number(f.minViewport, { min: 240, max: 900, step: 10 }, (v) => update(() => (f.minViewport = v)))),
-            row("Base (px)", slider(f.minBase, { min: 12, max: 24, step: 0.5 }, (v) => update(() => (f.minBase = v)))),
-            row("Ratio", ratioControl(f.minRatio, (v) => update(() => (f.minRatio = v))))),
-          group(`Desktop (at ${f.maxViewport}px and above)`,
-            row("Viewport", number(f.maxViewport, { min: 600, max: 2400, step: 10 }, (v) => update(() => (f.maxViewport = v)))),
-            h("p", { class: "pg-note" }, `Base ${config.scale.base}px × ratio ${config.scale.ratio} (set in step 1)`)),
-        ];
-      },
-    },
-  ];
-
-  function renderTypeStep() {
-    const step = STEPS[ui.step];
-    $("stepnav").replaceChildren(...STEPS.map((s, i) =>
-      h("button", { "aria-current": i === ui.step ? "step" : null, onclick: () => goToType(i) }, s.title)));
-    $("step").replaceChildren(
-      h("h2", {}, step.title.replace(/^\d+ · /, "")),
-      Object.assign(h("p", { class: "pg-hint" }), { innerHTML: step.hint }),
-      ...step.render());
-    $("step").scrollTop = 0;
-    $("prev").disabled = ui.step === 0;
-    $("next").disabled = ui.step === STEPS.length - 1;
-  }
-
-  function goToType(i) {
-    ui.step = i;
-    ui.tab = STEPS[i].tab;
-    renderTypeStep();
-    renderTypePreview();
-    persist();
-  }
-
-  // ---------- fonts ----------
-  // Static faces declared in typography.config.js. Status is keyed by "slot:src".
-  const faceStatus = {};
-  const faceKey = (slot, face) => `${slot}:${face.src}`;
-
-  function facesOf(slot) {
-    return config.fonts[slot].faces || [];
-  }
-
-  function weightsFor(slot) {
-    const faces = facesOf(slot);
-    if (faces.length) return [...new Set(faces.map((f) => f.weight))].sort((a, b) => a - b);
-    return [100, 200, 300, 400, 500, 600, 700, 800, 900];
-  }
-
-  function nearestWeight(available, target) {
-    return available.reduce((best, w) => (Math.abs(w - target) < Math.abs(best - target) ? w : best), available[0]);
-  }
-
-  // Faces with a "min max" weight string (variable fonts) return [min, max]; static faces return null.
-  function weightRangeOf(slot) {
-    for (const face of facesOf(slot)) {
-      if (typeof face.weight === "string" && face.weight.trim().includes(" ")) {
-        const [min, max] = face.weight.trim().split(/\s+/).map(Number);
-        return [min, max];
-      }
-    }
-    return null;
-  }
-
-  // A single weight usable in a font shorthand string, even for a "min max" range face.
-  function checkWeightOf(face) {
-    return typeof face.weight === "string" ? face.weight.trim().split(/\s+/)[0] : face.weight;
-  }
-
-  function facesList(slot) {
-    const faces = facesOf(slot);
-    if (!faces.length) return [h("p", { class: "pg-note" }, "No static faces configured — using the fallback stack.")];
-    return faces.map((face, i) => {
-      const label = `${face.src} — ${face.weight}${face.style === "italic" ? " italic" : ""}`;
-      return h("p", { class: "pg-note", id: `facestatus-${slot}-${i}` }, `${label} — checking…`);
-    });
-  }
-
-  function setFaceStatusNode(slot, i, face, status) {
-    const node = $(`facestatus-${slot}-${i}`);
-    if (!node) return;
-    const label = `${face.src} — ${face.weight}${face.style === "italic" ? " italic" : ""}`;
-    node.textContent = `${label} — ${status}`;
-    node.className = `pg-note ${status === "loaded" ? "ok" : "warn"}`;
-  }
-
-  async function checkFaces() {
-    for (const slot of ["sans", "mono", "serif"]) {
-      const font = config.fonts[slot];
-      const faces = facesOf(slot);
-      if (!font.family) continue;
-      for (let i = 0; i < faces.length; i++) {
-        const face = faces[i];
-        const key = faceKey(slot, face);
-        const spec = `${face.style === "italic" ? "italic " : ""}${checkWeightOf(face)} 16px "${font.family}"`;
-        try {
-          const result = await document.fonts.load(spec);
-          faceStatus[key] = result.length > 0 ? "loaded" : "missing";
-        } catch {
-          faceStatus[key] = "missing";
-        }
-        setFaceStatusNode(slot, i, face, faceStatus[key]);
-      }
-    }
-  }
-
-  // ---------- apply ----------
-  function update(mutate) {
-    mutate();
-    apply();
-  }
-
-  function apply() {
-    $("tokens").textContent = generateTypographyCSS(config, {
-      fluidUnit: "cqi", // container units so the Width slider simulates a viewport
-    });
-    refreshMeta();
-    persist();
-    updateDirty();
-    checkFaces();
-  }
-
-  function persist() {
-    store.set(STORAGE_KEY, {
-      ui,
-      colorUi,
-      typography: { config, fingerprint: TYPE_FINGERPRINT },
-      color: { config: colorConfig, fingerprint: COLOR_FINGERPRINT },
-    });
-  }
-
-  // ---------- preview ----------
-  const editable = (cls, content, tag = "p") => h(tag, { class: cls, contenteditable: "true", spellcheck: "false" }, content);
-
-  const TYPE_TABS = [["specimen", "Specimen"], ["context", "In context"], ["scale", "Scale"]];
-
-  function renderTypePreview() {
-    const views = { specimen: specimenView, context: contextView, scale: scaleView };
-    $("preview").replaceChildren(views[ui.tab]());
-    refreshMeta();
-  }
-
-  function specimenView() {
-    return h("div", { class: "pv-specimen" }, [
-      ...ROLES.map((name) =>
-        h("div", { class: "pv-spec-row" },
-          h("div", { class: "pv-meta", "data-meta": name }),
-          editable(`text-${name}`, SAMPLES[name], name === "mono" ? "code" : "p"))),
-      h("div", { class: "pv-spec-row" },
-        h("div", { class: "pv-meta" }, h("strong", {}, "italic")),
-        h("p", {
-          contenteditable: "true", spellcheck: "false",
-          style: "font-family: var(--font-family-sans); font-size: var(--font-size-0); font-style: italic;",
-        }, "The quick brown fox jumps over the lazy dog — 0123456789.")),
-    ]);
-  }
-
-  function scaleView() {
-    return h("div", {}, [...SCALE_STEPS].reverse().map((s) =>
-      h("div", { class: "pv-ladder-row" },
-        h("div", { class: "pv-meta", "data-step": s }),
-        h("div", { class: "pv-ladder-sample", style: `font-size: var(--font-size-${s})`, contenteditable: "true", spellcheck: "false" },
-          "Aa — The quick brown fox jumps over the lazy dog"))));
-  }
-
-  function contextView() {
-    return h("div", { class: "pv-context" },
-      h("section", { class: "pv-hero" },
-        editable("text-label pv-eyebrow", "Case study · 2026"),
-        editable("text-display", "Calm interfaces for complex science", "h1"),
-        editable("text-body-lg", "How we turned years of physiological research into a product people open every morning — without dumbing down the science."),
-        h("div", { class: "pv-actions" },
-          h("span", { class: "pv-button text-action" }, "Read case study"),
-          h("span", { class: "pv-button ghost text-action" }, "View prototype"))),
-
-      h("section", { class: "pv-hero" },
-        editable("text-label", "Editorial · 2026"),
-        editable("text-display-editorial", "The quiet architecture of trust", "h1"),
-        editable("text-body-lg", "A companion headline style for case studies and article titles — set in the serif, for a warmer, more editorial register."),
-        h("div", { class: "pv-actions" },
-          h("span", { class: "pv-button text-action" }, "Read the article"),
-          h("span", { class: "pv-button ghost text-action" }, "View prototype"))),
-
-      h("section", { class: "pv-hero" },
-        editable("text-label", "Overflow check · long word"),
-        editable("text-display", "Desenvolvimento sustentável", "h1"),
-        editable("text-display-editorial", "Desenvolvimento sustentável", "p")),
-
-      h("article", { class: "pv-article" },
-        editable("text-heading-lg", "Why stress feels different in the body", "h2"),
-        editable("text-body-sm pv-byline", "FeelScience Journal · 12 min read · September 2026"),
-        editable("text-prose", "Heart-rate variability (HRV) describes the small changes in time between heartbeats. Higher variability is generally associated with a nervous system that adapts well to changing demands, while persistently low values can signal accumulated stress."),
-        editable("text-prose", "In a six-week study, participants wore a sensor overnight and logged how rested they felt each morning. The relationship between the two was stronger than either the sensor or the self-report alone."),
-        editable("text-heading-md", "What the research tells us", "h3"),
-        editable("text-prose", "Across 48 participants, morning HRV predicted self-reported energy with a correlation of r = 0.62. Temperature changes of ±0.5 °C had a smaller but measurable effect."),
-        h("figure", { class: "pv-figure" },
-          h("div", { class: "pv-figure-img", role: "img", "aria-label": "Placeholder chart" }),
-          editable("text-caption", "Figure 2. Morning HRV versus self-reported energy (n = 48, p < 0.05).", "figcaption")),
-        editable("text-heading-sm", "Methods and participants", "h4"),
-        editable("text-prose", "Data were collected with a chest-strap sensor sampling at 1,000 Hz. RMSSD was computed over a five-minute window before waking:"),
-        h("pre", { class: "pv-code" }, editable("text-mono", "const rmssd = Math.sqrt(mean(diffs.map((d) => d ** 2)));\n// median: 42.7 ms  ·  IQR: 31.2–58.9 ms", "code")),
-        editable("text-body-sm pv-footnote", "¹ Values are illustrative. This preview uses placeholder content to show hierarchy, not real findings.")),
-
-      h("section", { class: "pv-cards" },
-        ["Sleep", "Breathing", "Movement"].map((topic, i) =>
-          h("div", { class: "pv-card" },
-            editable("text-label", `Module 0${i + 1}`),
-            editable("text-heading-sm", `${topic} and recovery`, "h3"),
-            editable("text-body-sm", "A short description that sits under a card title and wraps onto a second line.")))));
-  }
-
-  function refreshMeta() {
-    document.querySelectorAll("[data-meta]").forEach((node) => {
-      const name = node.dataset.meta;
-      const role = config.roles[name];
-      const sample = node.nextElementSibling;
-      const size = sample ? parseFloat(getComputedStyle(sample).fontSize) : 0;
-      node.replaceChildren(
-        h("strong", {}, name),
-        `step ${role.step} · ${px(size)}`, h("br"),
-        `${role.font} ${role.weight} · lh ${role.lineHeight}`, h("br"),
-        `tracking ${role.tracking}em${role.transform !== "none" ? ` · ${role.transform}` : ""}`);
-    });
-    document.querySelectorAll("[data-step]").forEach((node) => {
-      const s = Number(node.dataset.step);
-      const size = parseFloat(getComputedStyle(node.nextElementSibling).fontSize);
-      const users = ROLES.filter((r) => config.roles[r].step === s);
-      node.replaceChildren(
-        h("strong", {}, `step ${s > 0 ? "+" : ""}${s}`),
-        `${px(size)} · ${Number((size / 16).toFixed(3))}rem`, h("br"),
-        users.length ? users.join(", ") : "—");
-    });
-  }
-
-  // ---------- color: state & steps ----------
-  const ACCENT_PRESETS = [
-    [0.64, 0.17, 45, "Warm terracotta"],
-    [0.72, 0.11, 240, "Calm blue"],
-    [0.921, 0.201, 125, "Acid lime"],
-    [0.62, 0.19, 350, "Hot pink"],
-    [0.55, 0.15, 280, "Violet"],
-  ];
-  const COLOR_TABS = [["preview", "Preview"], ["contrast", "Contrast"]];
-
-  function updateDirty() {
-    const typeDirty = JSON.stringify(config) !== JSON.stringify(DEFAULTS);
-    const colorDirty = JSON.stringify(colorConfig) !== JSON.stringify(COLOR_DEFAULTS);
-    $("dirty").hidden = !(typeDirty || colorDirty);
-  }
-
-  function updateColor(mutate) {
-    mutate();
-    applyColor();
-  }
-
-  function applyColor() {
-    $("colorTokens").textContent = generateColorCSS(colorConfig);
-    refreshSwatchRows();
-    updateDirty();
-    persist();
-    if (ui.mode === "color") {
-      if (colorUi.tab === "preview") renderColorPreview();
-      else renderContrastTable();
-    }
-  }
-
-  function swatchRowFor(scaleName) {
-    return h("div", { class: "pg-swatchrow", "data-swatchrow": scaleName });
-  }
-
-  function refreshSwatchRows() {
-    const palette = resolvePalette(colorConfig);
-    document.querySelectorAll("[data-swatchrow]").forEach((node) => {
-      const spec = node.dataset.swatchrow;
-      const [kind, key] = spec.includes(":") ? spec.split(":") : [null, spec];
-      const isNeutral = kind === "neutral";
-      const steps = isNeutral ? NEUTRAL_STEPS : ACCENT_STEPS;
-      const scale = isNeutral ? palette.scales.neutrals[key] : palette.scales[key];
-      node.replaceChildren(...steps.map((step) => {
-        const hex = scale[step];
-        return h("div", {},
-          h("div", { class: "pg-swatch-chip", style: `background:${hex};`, title: hex }),
-          h("div", { class: "pg-swatch-label" }, `${step}`));
-      }));
-    });
-  }
-
-  function seedControls(seed, presets) {
-    const rows = [
-      row("Lightness", slider(seed.lightness, { min: 0.1, max: 0.95, step: 0.005 }, (v) => updateColor(() => (seed.lightness = v)))),
-      row("Chroma", slider(seed.chroma, { min: 0, max: 0.35, step: 0.005 }, (v) => updateColor(() => (seed.chroma = v)))),
-      row("Hue", slider(seed.hue, { min: 0, max: 360, step: 1 }, (v) => updateColor(() => (seed.hue = v)))),
-    ];
-    if (presets) {
-      rows.push(row("Presets", select("", [["", "Presets…"], ...presets.map((p, i) => [String(i), p[3]])], (v) => {
-        if (v === "") return;
-        const [lightness, chroma, hue] = presets[Number(v)];
-        updateColor(() => { seed.lightness = lightness; seed.chroma = chroma; seed.hue = hue; });
-        renderColorStep();
-      })));
-    }
-    return rows;
-  }
-
-  function scaleStepControl(current, onChange) {
-    const scaleNames = ["neutral", "accent", "red", "amber", "green", "blue"];
-    const stepsFor = (name) => (name === "neutral" ? NEUTRAL_STEPS : ACCENT_STEPS);
-    const [scaleName, step] = current;
-    const wrap = h("div", { class: "pg-control" });
-    const stepSel = h("select", { onchange: (e) => onChange([scaleName, Number(e.target.value)]) },
-      stepsFor(scaleName).map((s) => h("option", { value: s, selected: s === step }, s)));
-    const scaleSel = h("select", {
-      onchange: (e) => {
-        const newScale = e.target.value;
-        const steps = stepsFor(newScale);
-        const newStep = steps.includes(step) ? step : steps[Math.floor(steps.length / 2)];
-        onChange([newScale, newStep]);
-      },
-    }, scaleNames.map((n) => h("option", { value: n, selected: n === scaleName }, n)));
-    wrap.append(scaleSel, stepSel);
-    return wrap;
-  }
-
-  const COLOR_STEPS = [
-    {
-      title: "1 · Neutrals",
-      hint: "Each brand gets its own hue for the whole neutral scale — nearly gray, just enough tint to feel intentional. Chroma stays constant across every step.",
-      render: () => BRANDS.flatMap((brand) => {
-        const n = colorConfig.primitives.neutrals[brand];
-        return [
-          group(`${brand} neutral`,
-            row("Hue", slider(n.hue, { min: 0, max: 360, step: 1 }, (v) => updateColor(() => (n.hue = v)))),
-            row("Chroma", slider(n.chroma, { min: 0, max: 0.03, step: 0.0005 }, (v) => updateColor(() => (n.chroma = v)))),
-            swatchRowFor(`neutral:${brand}`)),
-        ];
-      }),
-    },
-    {
-      title: "2 · Accents",
-      hint: "Each brand gets one seed. Hue is fixed across the scale; chroma peaks near the seed's lightness and tapers toward both ends.",
-      render: () => [
-        group("Portfolio", ...seedControls(colorConfig.primitives.accents.portfolio, ACCENT_PRESETS), swatchRowFor("portfolio")),
-        group("FeelScience", ...seedControls(colorConfig.primitives.accents.feelscience, ACCENT_PRESETS), swatchRowFor("feelscience")),
-      ],
-    },
-    {
-      title: "3 · Status colors",
-      hint: "Same generation rule as accents: peak chroma at the seed's lightness, tapering toward the ends.",
-      render: () => STATUS_NAMES.map((name) =>
-        group(name, ...seedControls(colorConfig.primitives.status[name]), swatchRowFor(name))),
-    },
-    {
-      title: "4 · Semantic mapping",
-      hint: "Pick which primitive step each role points to, separately for light and dark. Roles (or individual modes) marked <b>computed</b> are resolved automatically — e.g. accent's light-mode fill is always the brand's anchor step, and focus-ring aliases accent-text.",
-      render: () => {
-        const rows = [];
-        for (const [name, role] of Object.entries(colorConfig.semantic)) {
-          if (role.alias) continue; // nothing to pick — always mirrors another role
-          for (const mode of ["light", "dark"]) {
-            const value = role[mode];
-            rows.push(row(`${name} · ${mode}`, Array.isArray(value)
-              ? scaleStepControl(value, (v) => updateColor(() => (role[mode] = v)))
-              : h("p", { class: "pg-note" }, "computed automatically")));
-          }
-        }
-        return [group("Role → scale + step", ...rows)];
-      },
-    },
-  ];
-
-  function renderColorStep() {
-    const step = COLOR_STEPS[colorUi.step];
-    $("stepnav").replaceChildren(...COLOR_STEPS.map((s, i) =>
-      h("button", { "aria-current": i === colorUi.step ? "step" : null, onclick: () => goToColor(i) }, s.title)));
-    $("step").replaceChildren(
-      h("h2", {}, step.title.replace(/^\d+ · /, "")),
-      Object.assign(h("p", { class: "pg-hint" }), { innerHTML: step.hint || "" }),
-      ...step.render());
-    $("step").scrollTop = 0;
-    $("prev").disabled = colorUi.step === 0;
-    $("next").disabled = colorUi.step === COLOR_STEPS.length - 1;
-    refreshSwatchRows();
-  }
-
-  function goToColor(i) {
-    colorUi.step = i;
-    renderColorStep();
-    renderPreview();
-    persist();
-  }
-
-  // ---------- color: preview ----------
-  function colorFrame(brandLabel, brand, key) {
-    const mode = colorUi.frameMode[key];
-    return h("div", { class: "pg-color-frame" },
-      h("div", { class: "pg-color-frame-head" },
-        h("span", {}, `${brandLabel} · ${mode}`),
-        h("button", {
-          class: "pg-btn", onclick: () => {
-            colorUi.frameMode[key] = mode === "light" ? "dark" : "light";
-            persist();
-            renderColorPreview();
-          },
-        }, "Toggle mode")),
-      h("div", { class: "pg-color-frame-body pv", "data-brand": brand, "data-mode": mode }, contextView()));
-  }
-
-  function renderColorPreview() {
-    $("colorStage").replaceChildren(
-      h("div", { class: "pg-color-frames" },
-        colorFrame("Portfolio", "portfolio", "a"),
-        colorFrame("FeelScience", "feelscience", "b")));
-  }
-
-  // ---------- color: contrast ----------
-  const CONTRAST_COMBOS = [["portfolio", "light"], ["portfolio", "dark"], ["feelscience", "light"], ["feelscience", "dark"]];
-
-  // WCAG: >=24px normal weight, or >=18.66px (~14pt) bold, counts as "large text" and
-  // only needs 3:1; everything else needs 4.5:1. Derived from the role's actual config
-  // (desktop-equivalent size, from typography's own stepPx) rather than hardcoded per
-  // pair, so it stays correct if a role's size or weight ever changes.
-  function textThresholdFor(roleName) {
-    const role = TYPE_CONFIG.roles[roleName];
-    const px = stepPx(TYPE_CONFIG, role.step).max;
-    const bold = role.weight >= 700; // UnB Pro's practical "bold" cutoff — no 500/600 face
-    const large = bold ? px >= 18.66 : px >= 24;
-    return {
-      threshold: large ? 3 : 4.5,
-      reason: `${large ? "large" : "normal"} text — role "${roleName}", ${px.toFixed(1)}px${bold ? " bold" : ""} — needs ${large ? 3 : 4.5}:1`,
-    };
-  }
-  const BOUNDARY = { threshold: 3, reason: "non-text UI boundary (WCAG 1.4.11) needs 3:1" };
-
-  // Every foreground/background pair the design can produce, classified by whether it's
-  // actually rendered anywhere. `render` builds a real, small instance of the pairing for
-  // the "contrast in context" gallery below — pairs without one are used but already
-  // visible elsewhere (the main Preview tab, or another example here), so they aren't
-  // duplicated as their own card.
-  const CONTRAST_PAIRS = [
-    {
-      id: "body-bg", label: "Body text on bg", used: true, ...textThresholdFor("body"),
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-primary"], p.semanticHex[b][m].bg),
-      render: () => h("p", { class: "text-body" }, "Body copy sits directly on the page background."),
-    },
-    {
-      id: "body-surface", label: "Body text on surface", used: true, ...textThresholdFor("body"),
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-primary"], p.semanticHex[b][m].surface),
-      render: () => h("div", { class: "pv-ctx-surface" }, h("p", { class: "text-body" }, "This panel sits on the surface token.")),
-    },
-    {
-      id: "secondary-surface-raised", label: "Secondary text on surface-raised", used: true, ...textThresholdFor("caption"),
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-secondary"], p.semanticHex[b][m]["surface-raised"]),
-      render: () => h("div", { class: "pv-ctx-surface-raised" }, h("p", { class: "text-caption" }, "Caption text on a raised panel.")),
-    },
-    {
-      id: "link-bg", label: "Link (accent-text) in a paragraph", used: true, ...textThresholdFor("body"),
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["accent-text"], p.semanticHex[b][m].bg),
-      render: () => h("p", { class: "text-body" }, "Read the ",
-        h("span", { style: "color: var(--color-accent-text);" }, "full case study"), " for details."),
-    },
-    {
-      id: "button-label", label: "Primary button label on accent fill", used: true, ...textThresholdFor("action"),
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-on-accent"], p.semanticHex[b][m].accent),
-      render: () => h("span", { class: "pv-button text-action" }, "Continue"),
-    },
-    {
-      id: "outline-border", label: "Outline button border", used: true, ...BOUNDARY,
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-primary"], p.semanticHex[b][m].bg),
-      render: () => h("span", { class: "pv-button ghost text-action" }, "Cancel"),
-    },
-    {
-      id: "card-border", label: "Card border on bg", used: true, ...BOUNDARY,
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["border-subtle"], p.semanticHex[b][m].bg),
-      render: () => h("div", { class: "pv-ctx-card" }, h("p", { class: "text-body-sm" }, "Card content.")),
-    },
-    {
-      id: "tag", label: "Tag on accent-subtle", used: true, ...textThresholdFor("label"),
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["accent-text"], p.semanticHex[b][m]["accent-subtle"]),
-      render: () => h("span", { class: "pv-tag text-label" }, "New"),
-    },
-    {
-      id: "status", label: "Status message (success)", used: true, ...textThresholdFor("body-sm"),
-      ratioFor: (b, m, p) => contrastRatio(p.scales.green[700], p.scales.green[100]),
-      render: () => h("div", { class: "pv-status-success text-body-sm" }, "Changes saved successfully."),
-    },
-    // Genuinely used, but already visible in the main Preview tab (labels/byline/footnote,
-    // and the button fill itself) — no separate card here to avoid duplicating a visual.
-    {
-      id: "secondary-bg", label: "Secondary text on bg (labels, byline)", used: true, ...textThresholdFor("body-sm"),
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m]["text-secondary"], p.semanticHex[b][m].bg),
-    },
-    {
-      id: "accent-fill-bg", label: "Accent fill on bg (the button itself)", used: true, ...BOUNDARY,
-      ratioFor: (b, m, p) => contrastRatio(p.semanticHex[b][m].accent, p.semanticHex[b][m].bg),
-      exceptionFor: (b, m, p) => m === "dark" && p.accentFillInfo[b].dark.exception,
-    },
-    // Not used anywhere in the design — classified so they can't quietly start "failing"
-    // and read as bugs. Nothing ever renders these combinations.
-    { id: "primary-accent", label: "text-primary on accent", used: false, ...textThresholdFor("body"),
-      reasonNotUsed: "text-primary never sits directly on an accent fill — that's what text-on-accent is for." },
-    { id: "secondary-surface", label: "text-secondary on surface", used: false, ...textThresholdFor("body-sm"),
-      reasonNotUsed: "no design use of secondary text directly on the surface token." },
-    { id: "secondary-accent", label: "text-secondary on accent", used: false, ...textThresholdFor("body-sm"),
-      reasonNotUsed: "secondary text never sits on an accent fill." },
-    { id: "accenttext-surface", label: "accent-text on surface", used: false, ...textThresholdFor("body"),
-      reasonNotUsed: "links/accented text render on bg, not on the surface token." },
-    { id: "accenttext-accent", label: "accent-text on accent", used: false, ...textThresholdFor("body"),
-      reasonNotUsed: "accent-colored text on an accent fill would be illegible by construction — never used." },
-    { id: "onaccent-bg", label: "text-on-accent on bg", used: false, ...textThresholdFor("action"),
-      reasonNotUsed: "text-on-accent is defined only for use on the accent fill itself." },
-    { id: "onaccent-surface", label: "text-on-accent on surface", used: false, ...textThresholdFor("action"),
-      reasonNotUsed: "same as above — only ever paired with accent." },
-  ];
-
-  function renderContrastTable() {
-    const palette = resolvePalette(colorConfig);
-    const usedPairs = CONTRAST_PAIRS.filter((p) => p.used);
-    const unusedPairs = CONTRAST_PAIRS.filter((p) => !p.used);
-
-    const usedTable = h("table", { class: "pg-contrast-table" },
-      h("thead", {}, h("tr", {},
-        h("th", {}, "Pair"), h("th", {}, "Threshold"),
-        ...CONTRAST_COMBOS.map(([brand, mode]) => h("th", {}, `${brand} · ${mode}`)))),
-      h("tbody", {}, usedPairs.map((pair) =>
-        h("tr", {},
-          h("td", {}, pair.label),
-          h("td", {}, `${pair.threshold}:1`, h("div", { class: "pg-note", style: "margin:2px 0 0;" }, pair.reason)),
-          ...CONTRAST_COMBOS.map(([brand, mode]) => {
-            const ratio = pair.ratioFor(brand, mode, palette);
-            const isException = pair.exceptionFor && pair.exceptionFor(brand, mode, palette);
-            const pass = ratio >= pair.threshold;
-            return h("td", {}, `${ratio.toFixed(2)}:1`,
-              h("div", { class: isException ? "pg-exception" : pass ? "pg-pass" : "pg-fail" },
-                isException ? "Known exception" : pass ? "AA pass" : "AA fail"));
-          })))));
-
-    const unusedTable = h("table", { class: "pg-contrast-table" },
-      h("thead", {}, h("tr", {}, h("th", {}, "Pair"), h("th", {}, "Threshold"), h("th", {}, "Why it's not used"))),
-      h("tbody", {}, unusedPairs.map((pair) =>
-        h("tr", {}, h("td", {}, pair.label), h("td", {}, `${pair.threshold}:1`), h("td", {}, pair.reasonNotUsed)))));
-
-    const contextExamples = usedPairs.filter((p) => p.render).map((pair) =>
-      h("div", { class: "pg-ctx-example" },
-        h("div", { class: "pg-ctx-example-label" }, `${pair.label} — ${pair.threshold}:1`),
-        h("div", { class: "pg-ctx-grid" },
-          CONTRAST_COMBOS.map(([brand, mode]) => {
-            const ratio = pair.ratioFor(brand, mode, palette);
-            return h("div", { class: "pg-color-frame-body pg-ctx-cell", "data-brand": brand, "data-mode": mode },
-              pair.render(),
-              h("div", { class: "pg-ctx-ratio" }, `${brand} · ${mode} — ${ratio.toFixed(2)}:1`));
-          }))));
-
-    $("colorStage").replaceChildren(
-      h("p", { class: "pg-group-title" }, `Used pairs (${usedPairs.length})`),
-      h("div", { class: "pg-contrast-wrap" }, usedTable),
-      h("details", { class: "pg-note" },
-        h("summary", {}, `Not used (${unusedPairs.length}) — the design never renders these, so they can't read as failures`),
-        h("div", { class: "pg-contrast-wrap" }, unusedTable)),
-      h("p", { class: "pg-group-title", style: "margin-top: 8px;" }, "Contrast in context"),
-      h("p", { class: "pg-note" }, "One real component per used pair with its own example — the ratio matches the row above."),
-      ...contextExamples);
-  }
-
-  // ---------- mode dispatch ----------
-  function renderModeSwitch() {
-    document.querySelectorAll("#modeswitch button").forEach((b) =>
-      b.setAttribute("aria-current", b.dataset.mode === ui.mode ? "true" : "false"));
-  }
-
-  function renderTabs() {
-    if (ui.mode === "typography") {
-      $("tabs").replaceChildren(...TYPE_TABS.map(([key, label]) =>
-        h("button", { role: "tab", "data-tab": key, "aria-selected": key === ui.tab }, label)));
-    } else {
-      $("tabs").replaceChildren(...COLOR_TABS.map(([key, label]) =>
-        h("button", { role: "tab", "data-tab": key, "aria-selected": key === colorUi.tab }, label)));
-    }
-  }
-
-  function renderStage() {
-    const isType = ui.mode === "typography";
-    $("frame").hidden = !isType;
-    $("colorStage").hidden = isType;
-    $("toolbarExtra").style.display = isType ? "contents" : "none";
-    if (isType) renderTypePreview();
-    else if (colorUi.tab === "preview") renderColorPreview();
-    else renderContrastTable();
-  }
-
-  function renderStep() {
-    if (ui.mode === "typography") renderTypeStep();
-    else renderColorStep();
-  }
-
-  function renderPreview() {
-    renderTabs();
-    renderStage();
-  }
-
-  // ---------- toolbar ----------
-  function applyFrame() {
-    $("frame").style.maxWidth = ui.fit ? "" : `${ui.width}px`;
-    $("frame").classList.toggle("dark", ui.dark);
-    $("width").value = ui.width;
-    $("width").disabled = ui.fit;
-    $("fit").checked = ui.fit;
-    $("dark").checked = ui.dark;
-  }
-
-  new ResizeObserver(([entry]) => {
-    $("widthOut").value = `${Math.round(entry.contentRect.width)}px`;
-    refreshMeta();
-  }).observe($("frame"));
-
-  $("tabs").addEventListener("click", (e) => {
-    if (!e.target.dataset.tab) return;
-    if (ui.mode === "typography") ui.tab = e.target.dataset.tab;
-    else colorUi.tab = e.target.dataset.tab;
-    renderPreview();
-    persist();
-  });
-  $("width").addEventListener("input", (e) => { ui.width = Number(e.target.value); applyFrame(); persist(); });
-  $("fit").addEventListener("change", (e) => { ui.fit = e.target.checked; applyFrame(); persist(); });
-  $("dark").addEventListener("change", (e) => { ui.dark = e.target.checked; applyFrame(); persist(); });
-  $("prev").addEventListener("click", () => {
-    if (ui.mode === "typography") goToType(Math.max(0, ui.step - 1));
-    else goToColor(Math.max(0, colorUi.step - 1));
-  });
-  $("next").addEventListener("click", () => {
-    if (ui.mode === "typography") goToType(Math.min(STEPS.length - 1, ui.step + 1));
-    else goToColor(Math.min(COLOR_STEPS.length - 1, colorUi.step + 1));
-  });
-  $("reset").addEventListener("click", () => {
-    if (ui.mode === "typography") {
-      if (!confirm("Discard your edits and reload the values from typography.config.js?")) return;
-      config = structuredClone(DEFAULTS);
-      renderTypeStep();
-      apply();
-    } else {
-      if (!confirm("Discard your edits and reload the values from color.config.js?")) return;
-      colorConfig = structuredClone(COLOR_DEFAULTS);
-      renderColorStep();
-      applyColor();
-    }
-    renderPreview();
-  });
-  $("modeswitch").addEventListener("click", (e) => {
-    const mode = e.target.dataset.mode;
-    if (!mode || mode === ui.mode) return;
-    ui.mode = mode;
-    renderModeSwitch();
-    renderStep();
-    renderPreview();
-    persist();
-  });
-
-  // ---------- export ----------
-  let exportKind = "type-config";
-  function exportText() {
-    if (exportKind === "type-css") return generateTypographyCSS(config);
-    if (exportKind === "color-css") return generateColorCSS(colorConfig);
-    if (exportKind === "color-config") {
-      return [
-        "/*",
-        " * Color source of truth, shared by Portfolio2026 and FeelScience.",
-        " *",
-        " * Edit values here (or tweak them in design-foundations-playground.html and",
-        " * paste the copied config back into this file), then run:  node design-tokens/build.js",
-        " */",
-        `const COLOR_CONFIG = ${JSON.stringify(colorConfig, null, 2)};`,
-        "",
-        'if (typeof module !== "undefined") module.exports = COLOR_CONFIG;',
-        "",
-      ].join("\n");
-    }
-    return [
-      "/*",
-      " * Typography source of truth, shared by Portfolio2026 and FeelScience.",
-      " *",
-      " * Edit values here (or tweak them in design-foundations-playground.html and paste",
-      " * the copied config back into this file), then run:  node design-tokens/build.js",
-      " */",
-      `const TYPE_CONFIG = ${JSON.stringify(config, null, 2)};`,
-      "",
-      'if (typeof module !== "undefined") module.exports = TYPE_CONFIG;',
-      "",
-    ].join("\n");
-  }
-  const EXPORT_HINTS = {
-    "type-config": "Replace the contents of <code>design-tokens/typography.config.js</code> with this, then press Reset (Typography mode) so the page reloads from the file.",
-    "type-css": "Preview of what <code>node design-tokens/build.js</code> writes to <code>typography.css</code>.",
-    "color-config": "Replace the contents of <code>design-tokens/color.config.js</code> with this, then press Reset (Color mode) so the page reloads from the file.",
-    "color-css": "Preview of what <code>node design-tokens/build.js</code> writes to <code>color.css</code>.",
-  };
-  function renderExport() {
-    document.querySelectorAll("#exportTabs button").forEach((b) => b.setAttribute("aria-selected", b.dataset.export === exportKind));
-    $("exportHint").innerHTML = EXPORT_HINTS[exportKind];
-    $("exportText").value = exportText();
-    $("copy").textContent = "Copy";
-  }
-  $("export").addEventListener("click", () => { renderExport(); $("exportDialog").showModal(); });
-  $("closeExport").addEventListener("click", () => $("exportDialog").close());
-  $("exportTabs").addEventListener("click", (e) => {
-    if (!e.target.dataset.export) return;
-    exportKind = e.target.dataset.export;
-    renderExport();
-  });
-  $("copy").addEventListener("click", async () => {
-    const area = $("exportText");
-    try {
-      await navigator.clipboard.writeText(area.value);
-    } catch {
-      area.select();
-      document.execCommand("copy");
-    }
-    $("copy").textContent = "Copied";
-  });
-
-  // ---------- boot ----------
-  applyFrame();
-  apply();
-  applyColor();
-  renderModeSwitch();
-  renderStep();
-  renderPreview();
-})();
+  PG.boot();
 </script>
 </body>
 </html>
