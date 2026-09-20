@@ -57,6 +57,20 @@ const COLOR_CONFIG = {
     },
   },
 
+  // Client accents: a case study page can adopt a client's color by setting
+  // data-accent="<name>" on any element. Build-time only — accent-text and
+  // text-on-accent are picked by contrast from a generated scale, so an arbitrary hex
+  // applied at runtime would get neither a scale nor any contrast check. Each entry
+  // is turned into a full scale and the same accent roles as a brand accent (anchor
+  // step for fills, contrast-driven accent-text, label chosen for 4.5:1), for every
+  // brand + mode. It overrides only the accent roles; neutrals and mode are untouched.
+  // A rule an entry can't satisfy in some brand/mode is reported by build.js instead
+  // of the target being quietly lowered. Names must not collide with a brand, status
+  // color, "neutral" or "accent".
+  clientAccents: {
+    aesop: { hex: "#7e7265" },
+  },
+
   // Semantic roles: each names a primitive scale + step for light and dark mode.
   // "accent" resolves against whichever brand is active (via [data-brand]).
   // A few roles can't be a plain scale/step pick:

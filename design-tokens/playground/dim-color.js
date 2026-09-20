@@ -123,10 +123,55 @@
         return [group("Role → scale + step", ...rows)];
       },
     },
+    {
+      title: "5 · Client accents",
+      hint: "Case study pages can adopt a client's color with <code>data-accent=\"name\"</code>. It's build-time: each entry gets a full scale and the same contrast-driven accent roles as a brand accent, per brand and mode. Add or remove entries in color.config.js.",
+      render: () => {
+        const names = Object.keys(state().clientAccents);
+        return [
+          group("Preview on frames",
+            row("Client accent", PG.select(PG.activeClientAccent() || "", [["", "None"], ...names.map((n) => [n, n])], (v) => {
+              PG.shared.clientAccent = v || null;
+              PG.persist();
+              PG.renderStage();
+            }))),
+          ...names.map((name) => group(name,
+            row("Hex", PG.text(state().clientAccents[name].hex, "#rrggbb", (v) => {
+              if (/^#[0-9a-fA-F]{6}$/.test(v)) update(() => (state().clientAccents[name].hex = v.toLowerCase()));
+            })),
+            swatchRowFor(name),
+            h("div", { "data-client-readout": name }))),
+        ];
+      },
+    },
   ];
+
+  // Resolved roles + contrast for one client accent, for every brand + mode it can sit on.
+  function refreshClientReadouts(root) {
+    (root || document).querySelectorAll("[data-client-readout]").forEach((node) => {
+      const name = node.dataset.clientReadout;
+      const palette = resolvePalette(state());
+      const client = palette.clientAccents[name];
+      if (!client) return;
+      const cell = (hex, on) => `${hex} · ${contrastRatio(hex, on).toFixed(2)}:1`;
+      node.replaceChildren(...BRANDS.flatMap((brand) => MODES.map((mode) => {
+        const r = client.semanticHex[brand][mode];
+        const bg = palette.semanticHex[brand][mode].bg;
+        const fill = client.fillInfo[brand][mode];
+        const text = client.textInfo[brand][mode];
+        const flag = fill.ok && text.ok ? "" : " — RULE NOT MET (fallback in use)";
+        return h("p", { class: "pg-note", style: "margin: 0 0 6px;" },
+          h("b", {}, `${brand} · ${mode}${flag}`), h("br"),
+          `accent ${cell(r.accent, bg)} vs bg (step ${fill.step})`, h("br"),
+          `label ${cell(r["text-on-accent"], r.accent)} on accent`, h("br"),
+          `accent-text ${cell(r["accent-text"], bg)} (need ${text.target}:1, step ${text.step})`);
+      })));
+    });
+  }
 
   function afterStepRender() {
     refreshSwatchRows(PG.$("step"));
+    refreshClientReadouts(PG.$("step"));
   }
 
   // ---------- inspect view: full palette swatches + contrast table ----------
@@ -141,7 +186,27 @@
     };
   }
   const BOUNDARY = { threshold: 3, reason: "non-text UI boundary (WCAG 1.4.11) needs 3:1" };
-  const CONTRAST_COMBOS = [["portfolio", "light"], ["portfolio", "dark"], ["feelscience", "light"], ["feelscience", "dark"]];
+  const BASE_COMBOS = [["portfolio", "light"], ["portfolio", "dark"], ["feelscience", "light"], ["feelscience", "dark"]];
+  // Brand accents first, then each client accent on every brand + mode it can sit on —
+  // a third element names the client accent. Recomputed per render: the registry is editable.
+  const contrastCombos = () => [
+    ...BASE_COMBOS,
+    ...Object.keys(state().clientAccents || {}).flatMap((name) => BASE_COMBOS.map(([brand, mode]) => [brand, mode, name])),
+  ];
+  const comboLabel = ([brand, mode, accent]) => (accent ? `${accent} on ${brand} · ${mode}` : `${brand} · ${mode}`);
+
+  // The palette as seen from one combo. For a client accent, the accent roles (and the
+  // fill info the "known exception" check reads) come from that client's resolution; every
+  // other role is the brand's own — a client accent leaves neutrals untouched.
+  function paletteFor(palette, [brand, mode, accent]) {
+    if (!accent) return palette;
+    const client = palette.clientAccents[accent];
+    return {
+      ...palette,
+      semanticHex: { [brand]: { [mode]: { ...palette.semanticHex[brand][mode], ...client.semanticHex[brand][mode] } } },
+      accentFillInfo: { [brand]: client.fillInfo[brand] },
+    };
+  }
 
   const CONTRAST_PAIRS = [
     { id: "body-bg", label: "Body text on bg", used: true, ...textThresholdFor("body"),
@@ -189,6 +254,7 @@
       ...BRANDS.map((brand) => [`${brand} neutral`, `neutral:${brand}`, NEUTRAL_STEPS, palette.scales.neutrals[brand]]),
       ...BRANDS.map((brand) => [`${brand} accent`, brand, ACCENT_STEPS, palette.scales[brand]]),
       ...STATUS_NAMES.map((name) => [name, name, ACCENT_STEPS, palette.scales[name]]),
+      ...Object.keys(palette.clientAccents).map((name) => [`${name} (client accent)`, name, ACCENT_STEPS, palette.scales[name]]),
     ];
     return h("div", {}, rows.map(([label, spec, steps, scale]) =>
       h("div", { class: "pg-group" },
@@ -207,14 +273,16 @@
     const usedTable = h("table", { class: "pg-contrast-table" },
       h("thead", {}, h("tr", {},
         h("th", {}, "Pair"), h("th", {}, "Threshold"),
-        ...CONTRAST_COMBOS.map(([brand, mode]) => h("th", {}, `${brand} · ${mode}`)))),
+        ...contrastCombos().map((combo) => h("th", {}, comboLabel(combo))))),
       h("tbody", {}, usedPairs.map((pair) =>
         h("tr", {},
           h("td", {}, pair.label),
           h("td", {}, `${pair.threshold}:1`, h("div", { class: "pg-note", style: "margin:2px 0 0;" }, pair.reason)),
-          ...CONTRAST_COMBOS.map(([brand, mode]) => {
-            const ratio = pair.ratioFor(brand, mode, palette);
-            const isException = pair.exceptionFor && pair.exceptionFor(brand, mode, palette);
+          ...contrastCombos().map((combo) => {
+            const [brand, mode] = combo;
+            const view = paletteFor(palette, combo);
+            const ratio = pair.ratioFor(brand, mode, view);
+            const isException = pair.exceptionFor && pair.exceptionFor(brand, mode, view);
             const pass = ratio >= pair.threshold;
             return h("td", {}, `${ratio.toFixed(2)}:1`,
               h("div", { class: isException ? "pg-exception" : pass ? "pg-pass" : "pg-fail" },
@@ -259,6 +327,6 @@
     inspectView,
     annotate,
     afterStepRender,
-    afterUpdate: () => refreshSwatchRows(PG.$("step")),
+    afterUpdate: () => { refreshSwatchRows(PG.$("step")); refreshClientReadouts(PG.$("step")); },
   });
 })(window.PG);

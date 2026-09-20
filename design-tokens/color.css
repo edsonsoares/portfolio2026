@@ -109,6 +109,19 @@
   --color-blue-800: #013c5b;
   --color-blue-900: #042c43;
   --color-blue-950: #061926;
+
+  /* client accent: aesop (#7e7265) */
+  --color-aesop-50: #f6f2ee;
+  --color-aesop-100: #ede7e0;
+  --color-aesop-200: #dbd3ca;
+  --color-aesop-300: #c3b9ae;
+  --color-aesop-400: #a5998d;
+  --color-aesop-500: #897c6f;
+  --color-aesop-600: #6c6156;
+  --color-aesop-700: #534a41;
+  --color-aesop-800: #3d372f;
+  --color-aesop-900: #2c2722;
+  --color-aesop-950: #191714;
 }
 
 :root, [data-brand="portfolio"] {
@@ -282,4 +295,85 @@
 
 [data-brand="feelscience"][data-mode="dark"] {
   --color-text-on-accent: #fdfdfe;
+}
+
+/* ---------- Client accents ---------- */
+
+/* aesop: values per brand + mode, resolved with the same rules as the brand accents */
+
+:root, [data-mode="light"] {
+  /* aesop → active brand, light (default) */
+  --client-aesop-accent: #6c6156; /* step 600, 5.40:1 vs bg, text 5.94:1 */
+  --client-aesop-accent-hover: #534a41;
+  --client-aesop-accent-subtle: #ede7e0;
+  --client-aesop-accent-text: #6c6156; /* step 600, 5.40:1 vs bg */
+  --client-aesop-text-on-accent: #fefdfd;
+  --client-aesop-focus-ring: #6c6156;
+}
+
+[data-mode="dark"] {
+  /* aesop → active brand, dark (default) */
+  --client-aesop-accent: #897c6f; /* step 500, 3.62:1 vs bg, text 5.11:1 */
+  --client-aesop-accent-hover: #c3b9ae;
+  --client-aesop-accent-subtle: #2c2722;
+  --client-aesop-accent-text: #c3b9ae; /* step 300, 7.60:1 vs bg */
+  --client-aesop-text-on-accent: #030202;
+  --client-aesop-focus-ring: #c3b9ae;
+}
+
+[data-brand="portfolio"][data-mode="light"] {
+  --client-aesop-accent: #6c6156; /* step 600, 5.40:1 vs bg, text 5.94:1 */
+  --client-aesop-accent-hover: #534a41;
+  --client-aesop-accent-subtle: #ede7e0;
+  --client-aesop-accent-text: #6c6156; /* step 600, 5.40:1 vs bg */
+  --client-aesop-text-on-accent: #fefdfd;
+  --client-aesop-focus-ring: #6c6156;
+}
+
+[data-brand="portfolio"][data-mode="dark"] {
+  --client-aesop-accent: #897c6f; /* step 500, 3.62:1 vs bg, text 5.11:1 */
+  --client-aesop-accent-hover: #c3b9ae;
+  --client-aesop-accent-subtle: #2c2722;
+  --client-aesop-accent-text: #c3b9ae; /* step 300, 7.60:1 vs bg */
+  --client-aesop-text-on-accent: #030202;
+  --client-aesop-focus-ring: #c3b9ae;
+}
+
+[data-brand="feelscience"][data-mode="light"] {
+  --client-aesop-accent: #6c6156; /* step 600, 5.39:1 vs bg, text 5.93:1 */
+  --client-aesop-accent-hover: #534a41;
+  --client-aesop-accent-subtle: #ede7e0;
+  --client-aesop-accent-text: #6c6156; /* step 600, 5.39:1 vs bg */
+  --client-aesop-text-on-accent: #fdfdfe;
+  --client-aesop-focus-ring: #6c6156;
+}
+
+[data-brand="feelscience"][data-mode="dark"] {
+  --client-aesop-accent: #897c6f; /* step 500, 3.60:1 vs bg, text 5.11:1 */
+  --client-aesop-accent-hover: #c3b9ae;
+  --client-aesop-accent-subtle: #2c2722;
+  --client-aesop-accent-text: #c3b9ae; /* step 300, 7.56:1 vs bg */
+  --client-aesop-text-on-accent: #020203;
+  --client-aesop-focus-ring: #c3b9ae;
+}
+
+[data-accent="aesop"],
+[data-brand][data-mode][data-accent="aesop"] {
+  --color-accent-50: var(--color-aesop-50);
+  --color-accent-100: var(--color-aesop-100);
+  --color-accent-200: var(--color-aesop-200);
+  --color-accent-300: var(--color-aesop-300);
+  --color-accent-400: var(--color-aesop-400);
+  --color-accent-500: var(--color-aesop-500);
+  --color-accent-600: var(--color-aesop-600);
+  --color-accent-700: var(--color-aesop-700);
+  --color-accent-800: var(--color-aesop-800);
+  --color-accent-900: var(--color-aesop-900);
+  --color-accent-950: var(--color-aesop-950);
+  --color-accent: var(--client-aesop-accent);
+  --color-accent-hover: var(--client-aesop-accent-hover);
+  --color-accent-subtle: var(--client-aesop-accent-subtle);
+  --color-accent-text: var(--client-aesop-accent-text);
+  --color-text-on-accent: var(--client-aesop-text-on-accent);
+  --color-focus-ring: var(--client-aesop-focus-ring);
 }

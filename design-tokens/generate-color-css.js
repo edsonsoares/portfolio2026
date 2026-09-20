@@ -130,6 +130,22 @@
     return (lighter + 0.05) / (darker + 0.05);
   }
 
+  // ---------- hex → OKLCH (for client-accent seeds) ----------
+  function hexToOklch(hex) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) throw new Error(`Invalid hex color: ${hex}`);
+    const { r: r8, g: g8, b: b8 } = hexToRgb(hex);
+    const r = srgbToLinearChannel(r8), g = srgbToLinearChannel(g8), b = srgbToLinearChannel(b8);
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+    const a = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+    const bb = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+    const C = Math.hypot(a, bb);
+    const H = ((Math.atan2(bb, a) * 180) / Math.PI + 360) % 360;
+    return { lightness: Number(L.toFixed(3)), chroma: Number(C.toFixed(4)), hue: Number(H.toFixed(1)) };
+  }
+
   // ---------- palette resolution ----------
   // Computes every primitive step and resolves every semantic role, for both
   // brands and both modes. Shared by CSS generation and the playground's live UI
@@ -151,6 +167,20 @@
         scales[brand][step] = oklchToHex(LIGHTNESS_LADDER[step], seed.chroma * chromaEnvelope(step, seed.lightness), seed.hue);
       }
     }
+    // Client accents: a hex per entry, turned into the same kind of seed a brand accent
+    // has, so every rule below (anchor step, fill, accent-text, label) applies unchanged.
+    const clientAccents = config.clientAccents || {};
+    const reserved = new Set([...BRANDS, ...STATUS_NAMES, "neutral", "accent"]);
+    const accentSeeds = { ...primitives.accents };
+    for (const [name, entry] of Object.entries(clientAccents)) {
+      if (reserved.has(name)) throw new Error(`clientAccents.${name} collides with an existing scale name`);
+      accentSeeds[name] = { ...entry, ...hexToOklch(entry.hex) };
+      scales[name] = {};
+      for (const step of ACCENT_STEPS) {
+        const seed = accentSeeds[name];
+        scales[name][step] = oklchToHex(LIGHTNESS_LADDER[step], seed.chroma * chromaEnvelope(step, seed.lightness), seed.hue);
+      }
+    }
     for (const name of STATUS_NAMES) {
       const seed = primitives.status[name];
       scales[name] = {};
@@ -159,21 +189,23 @@
       }
     }
 
-    function scaleFor(scaleName, brand) {
-      if (scaleName === "accent") return scales[brand];
+    // `brand` is the neutral/bg context; `key` names the accent scale in play — the brand
+    // itself for a brand accent, a client-accent name when one is applied on top of it.
+    function scaleFor(scaleName, brand, key = brand) {
+      if (scaleName === "accent") return scales[key];
       if (scaleName === "neutral") return scales.neutrals[brand];
       return scales[scaleName];
     }
 
     // The accent step closest to the brand's seed lightness — the truest rendition of
     // the brand's color (e.g. terracotta ~500, Klein blue ~700).
-    function anchorStepFor(brand) {
-      return nearestStepTo(primitives.accents[brand].lightness);
+    function anchorStepFor(key) {
+      return nearestStepTo(accentSeeds[key].lightness);
     }
 
-    function accentAnchor(brand) {
-      const step = anchorStepFor(brand);
-      return { step, hex: scales[brand][step] };
+    function accentAnchor(key) {
+      const step = anchorStepFor(key);
+      return { step, hex: scales[key][step] };
     }
 
     // Best label color for a given fill, chosen from neutral-0/900/950/1000 — not just
@@ -203,10 +235,10 @@
     // documented trade-off rather than a search result.
     const FILL_MIN_TEXT_CONTRAST = 4.5;
     const FILL_MIN_BG_CONTRAST_DARK = 3;
-    function accentFillStep(brand, mode) {
-      const anchor = anchorStepFor(brand);
-      if (mode === "dark" && primitives.accents[brand].darkFillException) {
-        const hex = scales[brand][anchor];
+    function accentFillStep(brand, mode, key = brand) {
+      const anchor = anchorStepFor(key);
+      if (mode === "dark" && accentSeeds[key].darkFillException) {
+        const hex = scales[key][anchor];
         const textHex = scales.neutrals[brand][0];
         const bgHex = resolveRole("bg", brand, "dark");
         return {
@@ -225,7 +257,7 @@
       const minBg = mode === "dark" ? FILL_MIN_BG_CONTRAST_DARK : 0;
       const white = scales.neutrals[brand][0];
       const candidates = ACCENT_STEPS.map((step) => {
-        const hex = scales[brand][step];
+        const hex = scales[key][step];
         const whiteContrast = contrastRatio(white, hex);
         const textHex = bestTextOn(brand, hex);
         return {
@@ -271,11 +303,11 @@
     // One step darker (higher step number) than the resolved light-mode fill, clamped to
     // the scale's end — kept visually coherent with whatever the fill actually renders as,
     // not the theoretical anchor (they can differ once accentFillStep adjusts for contrast).
-    function accentHoverAnchor(brand) {
-      const fillStep = accentFillStep(brand, "light").step;
+    function accentHoverAnchor(brand, key = brand) {
+      const fillStep = accentFillStep(brand, "light", key).step;
       const i = ACCENT_STEPS.indexOf(fillStep);
       const step = ACCENT_STEPS[Math.min(i + 1, ACCENT_STEPS.length - 1)];
-      return { step, hex: scales[brand][step] };
+      return { step, hex: scales[key][step] };
     }
 
     // Reuses accentFillStep's own label choice rather than recomputing it independently —
@@ -284,11 +316,11 @@
     // "most headroom" rule would silently disagree and pick dark anyway. A brand with a
     // declared darkFillException instead keeps the true brand color for its dark fill and
     // forces white regardless of what either picker would say.
-    function textOnAccent(brand, mode) {
-      if (mode === "dark" && primitives.accents[brand].darkFillException) {
+    function textOnAccent(brand, mode, key = brand) {
+      if (mode === "dark" && accentSeeds[key].darkFillException) {
         return scales.neutrals[brand][0];
       }
-      return accentFillStep(brand, mode).textHex;
+      return accentFillStep(brand, mode, key).textHex;
     }
 
     // Picks the accent step closest to the brand's seed lightness (i.e. preferring the
@@ -296,12 +328,12 @@
     // light mode, 7:1 in dark mode (small accent text needs the stricter target there).
     // Falls back to the highest-contrast step (flagged via `ok: false`) if none clear it.
     const ACCENT_TEXT_TARGET_RATIO = { light: 4.5, dark: 7 };
-    function accentTextStep(brand, mode) {
+    function accentTextStep(brand, mode, key = brand) {
       const bgHex = resolveRole("bg", brand, mode);
-      const seedLightness = primitives.accents[brand].lightness;
+      const seedLightness = accentSeeds[key].lightness;
       const target = ACCENT_TEXT_TARGET_RATIO[mode];
       const candidates = ACCENT_STEPS.map((step) => {
-        const hex = scales[brand][step];
+        const hex = scales[key][step];
         return {
           step,
           hex,
@@ -320,20 +352,20 @@
 
     // Resolve one semantic role to a concrete hex for one brand + mode. Each mode's value
     // is either a plain [scaleName, step] pick or a { computed: "name" } marker.
-    function resolveRole(name, brand, mode, seen = new Set()) {
+    function resolveRole(name, brand, mode, seen = new Set(), key = brand) {
       if (seen.has(name)) throw new Error(`Circular semantic alias: ${name}`);
       const role = semantic[name];
-      if (role.alias) return resolveRole(role.alias, brand, mode, new Set(seen).add(name));
+      if (role.alias) return resolveRole(role.alias, brand, mode, new Set(seen).add(name), key);
       const value = role[mode];
       if (Array.isArray(value)) {
         const [scaleName, step] = value;
-        return scaleFor(scaleName, brand)[step];
+        return scaleFor(scaleName, brand, key)[step];
       }
       switch (value.computed) {
-        case "accent-fill": return accentFillStep(brand, mode).hex;
-        case "accent-hover-anchor": return accentHoverAnchor(brand).hex;
-        case "accent-text": return accentTextStep(brand, mode).hex;
-        case "text-on-accent": return textOnAccent(brand, mode);
+        case "accent-fill": return accentFillStep(brand, mode, key).hex;
+        case "accent-hover-anchor": return accentHoverAnchor(brand, key).hex;
+        case "accent-text": return accentTextStep(brand, mode, key).hex;
+        case "text-on-accent": return textOnAccent(brand, mode, key);
         default: throw new Error(`Unknown computed role: ${name}/${mode}`);
       }
     }
@@ -355,7 +387,40 @@
       }
     }
 
-    return { scales, semanticHex, roleNames, accentAnchorInfo, accentFillInfo, accentTextInfo, activeBrand: primitives.activeBrand };
+    // Roles that depend on the accent scale — directly (a pick from it, or a computed
+    // accent role) or through an alias. These are the only roles a client accent
+    // overrides; neutrals and everything mode-related stay untouched.
+    const ACCENT_COMPUTED = new Set(["accent-fill", "accent-hover-anchor", "accent-text", "text-on-accent"]);
+    function isAccentRole(name, seen = new Set()) {
+      if (seen.has(name)) return false;
+      const role = semantic[name];
+      if (role.alias) return isAccentRole(role.alias, new Set(seen).add(name));
+      return MODES.some((mode) => {
+        const value = role[mode];
+        return Array.isArray(value) ? value[0] === "accent" : !!value?.computed && ACCENT_COMPUTED.has(value.computed);
+      });
+    }
+    const accentRoleNames = roleNames.filter((name) => isAccentRole(name));
+
+    // Per client accent, per brand it can sit on, per mode: the same resolution as a brand
+    // accent (see the functions above), with the brand supplying only bg + label candidates.
+    const clientInfo = {}; // clientInfo[name] = { seed, anchor, semanticHex[brand][mode][role], fillInfo, textInfo }
+    for (const name of Object.keys(clientAccents)) {
+      const info = { seed: accentSeeds[name], anchor: accentAnchor(name), semanticHex: {}, fillInfo: {}, textInfo: {} };
+      for (const brand of BRANDS) {
+        info.semanticHex[brand] = { light: {}, dark: {} };
+        info.fillInfo[brand] = {};
+        info.textInfo[brand] = {};
+        for (const mode of MODES) {
+          for (const role of accentRoleNames) info.semanticHex[brand][mode][role] = resolveRole(role, brand, mode, new Set(), name);
+          info.fillInfo[brand][mode] = accentFillStep(brand, mode, name);
+          info.textInfo[brand][mode] = accentTextStep(brand, mode, name);
+        }
+      }
+      clientInfo[name] = info;
+    }
+
+    return { scales, semanticHex, roleNames, accentAnchorInfo, accentFillInfo, accentTextInfo, activeBrand: primitives.activeBrand, accentRoleNames, clientAccents: clientInfo };
   }
 
   // ---------- CSS generation ----------
@@ -377,6 +442,10 @@
     }
     for (const name of STATUS_NAMES) {
       out.push("", `  /* ${name} */`);
+      for (const step of ACCENT_STEPS) out.push(`  --color-${name}-${step}: ${scales[name][step]};`);
+    }
+    for (const [name, entry] of Object.entries(config.clientAccents || {})) {
+      out.push("", `  /* client accent: ${name} (${entry.hex}) */`);
       for (const step of ACCENT_STEPS) out.push(`  --color-${name}-${step}: ${scales[name][step]};`);
     }
     out.push("}", "");
@@ -460,6 +529,47 @@
       }
     }
 
+    // Client accents. Build-time only: each is a full generated scale with contrast-checked
+    // roles for every brand + mode it can sit on, exposed as --client-<name>-<role> on the
+    // same brand/mode selectors as above. [data-accent="<name>"] then points the accent
+    // roles at them, so it overrides only the accent roles — neutrals and mode are untouched.
+    // Put data-accent on, or inside, the element that carries data-brand/data-mode.
+    const clientNames = Object.keys(palette.clientAccents);
+    if (clientNames.length) {
+      const modeSelector = (brand, mode, isDefault) =>
+        isDefault ? (mode === "light" ? `:root, [data-mode="light"]` : `[data-mode="dark"]`) : `[data-brand="${brand}"][data-mode="${mode}"]`;
+      const clientVars = (name, brand, mode) => palette.accentRoleNames.map((role) => {
+        const hex = palette.clientAccents[name].semanticHex[brand][mode][role];
+        let note = "";
+        if (role === "accent-text") {
+          const t = palette.clientAccents[name].textInfo[brand][mode];
+          note = ` /* step ${t.step}, ${t.contrast.toFixed(2)}:1 vs bg${t.ok ? "" : ` — fallback, below ${t.target}:1`} */`;
+        } else if (role === "accent") {
+          const f = palette.clientAccents[name].fillInfo[brand][mode];
+          note = ` /* step ${f.step}, ${f.bgContrast.toFixed(2)}:1 vs bg, text ${f.textContrast.toFixed(2)}:1${f.ok ? "" : " — fallback, below target"} */`;
+        }
+        return `  --client-${name}-${role}: ${hex};${note}`;
+      });
+      out.push("/* ---------- Client accents ---------- */", "");
+      for (const name of clientNames) {
+        out.push(`/* ${name}: values per brand + mode, resolved with the same rules as the brand accents */`, "");
+        for (const mode of MODES) {
+          out.push(`${modeSelector(primitives.activeBrand, mode, true)} {`, `  /* ${name} → active brand, ${mode} (default) */`,
+            ...clientVars(name, primitives.activeBrand, mode), "}", "");
+        }
+        for (const brand of BRANDS) {
+          for (const mode of MODES) {
+            out.push(`${modeSelector(brand, mode, false)} {`, ...clientVars(name, brand, mode), "}", "");
+          }
+        }
+        // The second selector out-ranks a same-element [data-brand][data-mode] rule.
+        out.push(`[data-accent="${name}"],`, `[data-brand][data-mode][data-accent="${name}"] {`);
+        for (const step of ACCENT_STEPS) out.push(`  --color-accent-${step}: var(--color-${name}-${step});`);
+        for (const role of palette.accentRoleNames) out.push(`  --color-${role}: var(--client-${name}-${role});`);
+        out.push("}", "");
+      }
+    }
+
     return out.join("\n");
   }
 
@@ -468,6 +578,7 @@
     resolvePalette,
     oklchToHex,
     contrastRatio,
+    hexToOklch,
     relativeLuminance,
     hexToRgb,
     chromaEnvelope,
