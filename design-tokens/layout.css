@@ -1,0 +1,379 @@
+/* Layout tokens and primitives. Generated from layout.config.js — do not edit by hand. */
+
+:root {
+  /* Breakpoints (min-width). Reference only: custom properties can't be used inside @media. */
+  /* disabled */ --bp-sm: 30rem; /* 480px */
+  --bp-md: 48rem; /* 768px */
+  --bp-lg: 64rem; /* 1024px */
+  --bp-xl: 80rem; /* 1280px */
+
+  /* Container widths */
+  --container-content: 90rem; /* 1440px */
+  --container-narrow: var(--measure);
+  --container-wide: none;
+
+  /* Container-query sizes. Reference only: write the literal value in @container. */
+  --cq-sm: 22.5rem; /* 360px */
+  --cq-md: 35rem; /* 560px */
+  --cq-lg: 50rem; /* 800px */
+
+  /* Grid — base (no query) */
+  --layout-columns: 4;
+  --layout-gutter: var(--space-16);
+  --layout-margin: var(--space-16);
+}
+
+/* Grid — md, from 768px */
+@media (min-width: 48rem) {
+  :root {
+    --layout-columns: 12;
+    --layout-gutter: var(--space-24);
+    --layout-margin: var(--space-24);
+  }
+}
+
+/* Grid — lg, from 1024px */
+@media (min-width: 64rem) {
+  :root {
+    --layout-columns: 12;
+    --layout-gutter: var(--space-24);
+    --layout-margin: var(--space-32);
+  }
+}
+
+/* Grid — xl, from 1280px; margin auto: centered by the container's max-width, padding keeps the previous range's margin as its floor */
+@media (min-width: 80rem) {
+  :root {
+    --layout-columns: 12;
+    --layout-gutter: var(--space-32);
+  }
+}
+
+/* ---------- Primitives ---------- */
+
+/* Centered container, built as a breakout grid: a full-width row with three tracks —
+   margin | content | margin. Children sit in the `content` track (capped at
+   --container-content, side margin = the range's --layout-margin); a child marked .l-bleed
+   takes the `full` span instead and escapes to the container's full width, with no negative
+   margins. Put .l-center at page level for a true full-viewport bleed. Add --narrow (prose,
+   exactly the reading measure) or --wide (full bleed, no margin). --stack-space sets the
+   row gap between children (0 if unset). */
+.l-center {
+  --l-content: calc(var(--container-content) - 2 * var(--layout-margin));
+  display: grid;
+  grid-template-columns:
+    [full-start] minmax(var(--layout-margin), 1fr)
+    [content-start] min(var(--l-content), 100% - 2 * var(--layout-margin))
+    [content-end] minmax(var(--layout-margin), 1fr)
+    [full-end]
+  ;
+  row-gap: var(--stack-space, 0);
+}
+.l-center > * { grid-column: content; }
+.l-center > .l-bleed { grid-column: full; }
+.l-center--narrow { --l-content: var(--container-narrow); }
+.l-center--wide { grid-template-columns: [full-start content-start] minmax(0, 1fr) [content-end full-end]; }
+
+/* Breakout group: a child of .l-center that spans the full width but keeps its margin | content |
+   margin tracks (a subgrid), so its own children can sit in `content` or break out with .l-bleed —
+   e.g. a section's title and text, then a full-bleed image, as one block with its own row gap.
+   Where subgrid isn't supported it rebuilds the same three tracks. */
+.l-center > .l-breakout {
+  grid-column: full;
+  display: grid;
+  grid-template-columns: subgrid;
+  row-gap: var(--stack-space, 0);
+}
+.l-breakout > * { grid-column: content; }
+.l-breakout > .l-bleed { grid-column: full; }
+@supports not (grid-template-columns: subgrid) {
+  .l-center > .l-breakout {
+    grid-template-columns:
+      [full-start] minmax(var(--layout-margin), 1fr)
+      [content-start] min(var(--l-content), 100% - 2 * var(--layout-margin))
+      [content-end] minmax(var(--layout-margin), 1fr)
+      [full-end]
+    ;
+  }
+}
+
+/* Vertical rhythm. Override the gap per element with --stack-space. */
+.l-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-space, var(--space-stack));
+}
+
+/* Wrapping row. Override the gap with --cluster-space. */
+.l-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--cluster-space, var(--space-inline));
+}
+
+/* Auto-fit grid — no media queries. Override the minimum column width with --l-grid-min. */
+.l-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--l-grid-min, 220px), 100%), 1fr));
+  gap: var(--layout-gutter);
+}
+
+/* Side column + content. The side column keeps --l-sidebar-width; the content wraps beneath it
+   on its own once it would drop below --l-sidebar-content-min of the row — no media queries.
+   The side column is the first child; add --end to put it after the content. */
+.l-sidebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--layout-gutter);
+}
+.l-sidebar > :first-child {
+  flex-basis: var(--l-sidebar-width, 320px);
+  flex-grow: 1;
+}
+.l-sidebar > :last-child {
+  flex-basis: 0;
+  flex-grow: 999;
+  min-inline-size: var(--l-sidebar-content-min, 50%);
+}
+.l-sidebar--end > :first-child { order: 2; }
+
+/* Aspect-ratio media box. Override with --l-frame-ratio. */
+.l-frame {
+  aspect-ratio: var(--l-frame-ratio, 16 / 9);
+  overflow: hidden;
+}
+.l-frame > img, .l-frame > video, .l-frame > iframe {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+/* Component container: makes container queries (--cq-sm/md/lg) usable inside it. */
+.l-container { container-type: inline-size; }
+
+/* Explicit grid: --layout-columns columns (4 / 12 / 12 / 12 by range) with the range's gutter.
+   Spans set only the END line and start/offset helpers set only the START line, so they combine
+   in any order: .l-offset-lg-1 .l-span-lg-6 is six columns beginning at column 2 from lg up.
+   All values are plain integers — grid lines don't take min()/var() everywhere — so each range
+   only gets the helpers its own column count allows (spans 1–N, offsets 0–N-1, starts 1–N).
+   Un-prefixed helpers are the base range; <range>-prefixed ones (md, lg, xl) apply from that
+   breakpoint up and take over from the base one. Pair a base class with a range class
+   (.l-span-4 .l-span-md-8) rather than stacking .l-span-full with a range span. */
+.l-columns {
+  display: grid;
+  grid-template-columns: repeat(var(--layout-columns), minmax(0, 1fr));
+  column-gap: var(--layout-gutter);
+  row-gap: var(--stack-space, var(--space-stack));
+}
+.l-span-full { grid-column: 1 / -1; }
+.l-span-1 { grid-column-end: span 1; }
+.l-span-2 { grid-column-end: span 2; }
+.l-span-3 { grid-column-end: span 3; }
+.l-span-4 { grid-column-end: span 4; }
+.l-start-1 { grid-column-start: 1; }
+.l-start-2 { grid-column-start: 2; }
+.l-start-3 { grid-column-start: 3; }
+.l-start-4 { grid-column-start: 4; }
+.l-offset-0 { grid-column-start: 1; }
+.l-offset-1 { grid-column-start: 2; }
+.l-offset-2 { grid-column-start: 3; }
+.l-offset-3 { grid-column-start: 4; }
+
+@media (min-width: 48rem) {
+  .l-span-md-1 { grid-column-end: span 1; }
+  .l-span-md-2 { grid-column-end: span 2; }
+  .l-span-md-3 { grid-column-end: span 3; }
+  .l-span-md-4 { grid-column-end: span 4; }
+  .l-span-md-5 { grid-column-end: span 5; }
+  .l-span-md-6 { grid-column-end: span 6; }
+  .l-span-md-7 { grid-column-end: span 7; }
+  .l-span-md-8 { grid-column-end: span 8; }
+  .l-span-md-9 { grid-column-end: span 9; }
+  .l-span-md-10 { grid-column-end: span 10; }
+  .l-span-md-11 { grid-column-end: span 11; }
+  .l-span-md-12 { grid-column-end: span 12; }
+  .l-span-md-full { grid-column: 1 / -1; }
+  .l-start-md-1 { grid-column-start: 1; }
+  .l-start-md-2 { grid-column-start: 2; }
+  .l-start-md-3 { grid-column-start: 3; }
+  .l-start-md-4 { grid-column-start: 4; }
+  .l-start-md-5 { grid-column-start: 5; }
+  .l-start-md-6 { grid-column-start: 6; }
+  .l-start-md-7 { grid-column-start: 7; }
+  .l-start-md-8 { grid-column-start: 8; }
+  .l-start-md-9 { grid-column-start: 9; }
+  .l-start-md-10 { grid-column-start: 10; }
+  .l-start-md-11 { grid-column-start: 11; }
+  .l-start-md-12 { grid-column-start: 12; }
+  .l-offset-md-0 { grid-column-start: 1; }
+  .l-offset-md-1 { grid-column-start: 2; }
+  .l-offset-md-2 { grid-column-start: 3; }
+  .l-offset-md-3 { grid-column-start: 4; }
+  .l-offset-md-4 { grid-column-start: 5; }
+  .l-offset-md-5 { grid-column-start: 6; }
+  .l-offset-md-6 { grid-column-start: 7; }
+  .l-offset-md-7 { grid-column-start: 8; }
+  .l-offset-md-8 { grid-column-start: 9; }
+  .l-offset-md-9 { grid-column-start: 10; }
+  .l-offset-md-10 { grid-column-start: 11; }
+  .l-offset-md-11 { grid-column-start: 12; }
+  .l-start-md-auto { grid-column-start: auto; }
+}
+
+@media (min-width: 64rem) {
+  .l-span-lg-1 { grid-column-end: span 1; }
+  .l-span-lg-2 { grid-column-end: span 2; }
+  .l-span-lg-3 { grid-column-end: span 3; }
+  .l-span-lg-4 { grid-column-end: span 4; }
+  .l-span-lg-5 { grid-column-end: span 5; }
+  .l-span-lg-6 { grid-column-end: span 6; }
+  .l-span-lg-7 { grid-column-end: span 7; }
+  .l-span-lg-8 { grid-column-end: span 8; }
+  .l-span-lg-9 { grid-column-end: span 9; }
+  .l-span-lg-10 { grid-column-end: span 10; }
+  .l-span-lg-11 { grid-column-end: span 11; }
+  .l-span-lg-12 { grid-column-end: span 12; }
+  .l-span-lg-full { grid-column: 1 / -1; }
+  .l-start-lg-1 { grid-column-start: 1; }
+  .l-start-lg-2 { grid-column-start: 2; }
+  .l-start-lg-3 { grid-column-start: 3; }
+  .l-start-lg-4 { grid-column-start: 4; }
+  .l-start-lg-5 { grid-column-start: 5; }
+  .l-start-lg-6 { grid-column-start: 6; }
+  .l-start-lg-7 { grid-column-start: 7; }
+  .l-start-lg-8 { grid-column-start: 8; }
+  .l-start-lg-9 { grid-column-start: 9; }
+  .l-start-lg-10 { grid-column-start: 10; }
+  .l-start-lg-11 { grid-column-start: 11; }
+  .l-start-lg-12 { grid-column-start: 12; }
+  .l-offset-lg-0 { grid-column-start: 1; }
+  .l-offset-lg-1 { grid-column-start: 2; }
+  .l-offset-lg-2 { grid-column-start: 3; }
+  .l-offset-lg-3 { grid-column-start: 4; }
+  .l-offset-lg-4 { grid-column-start: 5; }
+  .l-offset-lg-5 { grid-column-start: 6; }
+  .l-offset-lg-6 { grid-column-start: 7; }
+  .l-offset-lg-7 { grid-column-start: 8; }
+  .l-offset-lg-8 { grid-column-start: 9; }
+  .l-offset-lg-9 { grid-column-start: 10; }
+  .l-offset-lg-10 { grid-column-start: 11; }
+  .l-offset-lg-11 { grid-column-start: 12; }
+  .l-start-lg-auto { grid-column-start: auto; }
+}
+
+@media (min-width: 80rem) {
+  .l-span-xl-1 { grid-column-end: span 1; }
+  .l-span-xl-2 { grid-column-end: span 2; }
+  .l-span-xl-3 { grid-column-end: span 3; }
+  .l-span-xl-4 { grid-column-end: span 4; }
+  .l-span-xl-5 { grid-column-end: span 5; }
+  .l-span-xl-6 { grid-column-end: span 6; }
+  .l-span-xl-7 { grid-column-end: span 7; }
+  .l-span-xl-8 { grid-column-end: span 8; }
+  .l-span-xl-9 { grid-column-end: span 9; }
+  .l-span-xl-10 { grid-column-end: span 10; }
+  .l-span-xl-11 { grid-column-end: span 11; }
+  .l-span-xl-12 { grid-column-end: span 12; }
+  .l-span-xl-full { grid-column: 1 / -1; }
+  .l-start-xl-1 { grid-column-start: 1; }
+  .l-start-xl-2 { grid-column-start: 2; }
+  .l-start-xl-3 { grid-column-start: 3; }
+  .l-start-xl-4 { grid-column-start: 4; }
+  .l-start-xl-5 { grid-column-start: 5; }
+  .l-start-xl-6 { grid-column-start: 6; }
+  .l-start-xl-7 { grid-column-start: 7; }
+  .l-start-xl-8 { grid-column-start: 8; }
+  .l-start-xl-9 { grid-column-start: 9; }
+  .l-start-xl-10 { grid-column-start: 10; }
+  .l-start-xl-11 { grid-column-start: 11; }
+  .l-start-xl-12 { grid-column-start: 12; }
+  .l-offset-xl-0 { grid-column-start: 1; }
+  .l-offset-xl-1 { grid-column-start: 2; }
+  .l-offset-xl-2 { grid-column-start: 3; }
+  .l-offset-xl-3 { grid-column-start: 4; }
+  .l-offset-xl-4 { grid-column-start: 5; }
+  .l-offset-xl-5 { grid-column-start: 6; }
+  .l-offset-xl-6 { grid-column-start: 7; }
+  .l-offset-xl-7 { grid-column-start: 8; }
+  .l-offset-xl-8 { grid-column-start: 9; }
+  .l-offset-xl-9 { grid-column-start: 10; }
+  .l-offset-xl-10 { grid-column-start: 11; }
+  .l-offset-xl-11 { grid-column-start: 12; }
+  .l-start-xl-auto { grid-column-start: auto; }
+}
+
+/* Two-column section pattern. .l-section is a grid on the page columns; from md up its
+   .l-section-title takes columns 1–3 (aligned to the top, so it labels the content beside it)
+   and .l-section-body takes columns 5–12. Below that both stack full width. The body
+   is a subgrid, so its children — and any .l-section-row inside it — stay aligned to the page
+   columns. Children of the body are full width by default; the row's children use the span
+   helpers relative to the columns the body spans. Without subgrid support the body is a single
+   column and .l-section-row falls back to 3 equal columns. */
+.l-section {
+  display: grid;
+  grid-template-columns: repeat(var(--layout-columns), minmax(0, 1fr));
+  column-gap: var(--layout-gutter);
+  row-gap: var(--stack-space, var(--space-stack));
+}
+.l-section-title, .l-section-body { grid-column: 1 / -1; }
+.l-section-body, .l-section-row {
+  display: grid;
+  grid-template-columns: subgrid;
+  row-gap: var(--stack-space, var(--space-stack));
+}
+.l-section-body > * { grid-column: 1 / -1; }
+@supports not (grid-template-columns: subgrid) {
+  .l-section-body, .l-section-row { grid-template-columns: minmax(0, 1fr); column-gap: var(--layout-gutter); }
+  .l-section-row > * { grid-column: auto; }
+}
+@media (min-width: 48rem) {
+  .l-section-title { grid-column: 1 / span 3; align-self: start; }
+  .l-section-body { grid-column: 5 / span 8; }
+  @supports not (grid-template-columns: subgrid) {
+    .l-section-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+}
+
+/* Media block: <figure class="cs-media cs-media--<variant>"> with a .cs-media-items row of images and one
+   figcaption, inside a .l-breakout. Below the section pattern's range the images stack full width;
+   from md up the items row is 8 equal columns — the same tracks as the section body,
+   so images line up with the page columns — and each variant places its images in them:
+     --single: 1/8  (start/span)
+     --duo: 1/4, 5/4  (start/span)
+     --asymmetric: 1/3, 4/5  (start/span)
+     --trio: 1/2, 4/2, 7/2  (start/span)
+     --bleed: the block spans the full width; its caption stays in the body column.
+   The caption always sits in the body column, so captions line up across every variant. */
+.cs-media { margin: 0; }
+.cs-media-items { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--layout-gutter); }
+.l-breakout > .cs-media--bleed { grid-column: full; display: grid; grid-template-columns: subgrid; }
+.cs-media--bleed > .cs-media-items { grid-column: full; }
+.cs-media--bleed > figcaption { grid-column: content; }
+@supports not (grid-template-columns: subgrid) {
+  .l-breakout > .cs-media--bleed {
+    grid-template-columns:
+      [full-start] minmax(var(--layout-margin), 1fr)
+      [content-start] min(var(--l-content), 100% - 2 * var(--layout-margin))
+      [content-end] minmax(var(--layout-margin), 1fr)
+      [full-end]
+    ;
+  }
+}
+@media (min-width: 48rem) {
+  .cs-media-items { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .cs-media--bleed > .cs-media-items { grid-template-columns: minmax(0, 1fr); }
+  .cs-media:not(.cs-media--bleed) > .cs-media-items, .cs-media > figcaption {
+    margin-inline-start: calc((100% + var(--layout-gutter)) * 4 / var(--layout-columns));
+    inline-size: calc((100% + var(--layout-gutter)) * 8 / var(--layout-columns) - var(--layout-gutter));
+  }
+  .cs-media--single > .cs-media-items > :nth-child(1) { grid-column: 1 / span 8; }
+  .cs-media--duo > .cs-media-items > :nth-child(1) { grid-column: 1 / span 4; }
+  .cs-media--duo > .cs-media-items > :nth-child(2) { grid-column: 5 / span 4; }
+  .cs-media--asymmetric > .cs-media-items > :nth-child(1) { grid-column: 1 / span 3; }
+  .cs-media--asymmetric > .cs-media-items > :nth-child(2) { grid-column: 4 / span 5; }
+  .cs-media--trio > .cs-media-items > :nth-child(1) { grid-column: 1 / span 2; }
+  .cs-media--trio > .cs-media-items > :nth-child(2) { grid-column: 4 / span 2; }
+  .cs-media--trio > .cs-media-items > :nth-child(3) { grid-column: 7 / span 2; }
+}
