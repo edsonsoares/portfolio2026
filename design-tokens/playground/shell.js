@@ -150,10 +150,12 @@ window.PG = window.PG || {};
 
   // Live preview uses container-query units (cqi) so the frames' own width drives
   // fluid tokens; the exported/build CSS (exportText below) uses the real default
-  // (vw) — dims that have no fluid values just ignore the unused option.
+  // (vw) — dims that have no fluid values just ignore the unused option. `live` also
+  // lets layout key its ranges to the preview frame's width (@container) rather than
+  // the page's viewport (@media), so the Width slider steps through them.
   function writeLiveTokens(key) {
     const dim = PG.dimensions[key];
-    PG.$(`${key}Tokens`).textContent = dim.generate(dim.state, { fluidUnit: "cqi" });
+    PG.$(`${key}Tokens`).textContent = dim.generate(dim.state, { fluidUnit: "cqi", live: true });
   }
   PG.writeLiveTokens = writeLiveTokens;
 
@@ -185,15 +187,26 @@ window.PG = window.PG || {};
     PG.$("framesPresetLabel").hidden = !isContext;
     PG.$("annotateLabel").hidden = !isContext;
     PG.$("inspectThemeLabel").hidden = isContext;
+    PG.$("reduceMotionLabel").hidden = PG.shared.dimension !== "motion";
+    PG.$("reduceMotion").checked = PG.shared.reduceMotion;
   }
+
+  // The client accent currently previewed (null = none). Stored in shared state so
+  // every dimension's frames show it, and dropped if the registry no longer has it.
+  PG.activeClientAccent = function activeClientAccent() {
+    const name = PG.shared.clientAccent;
+    return name && PG.dimensions.color?.state.clientAccents?.[name] ? name : null;
+  };
 
   // Inspect content needs the same themed chrome as a Context frame — the --color-*
   // tokens only resolve under [data-brand][data-mode], so a bare container renders blank.
   function renderInspect(dim) {
     const { brand, mode } = PG.shared.inspect;
     return h("div", { class: "pg-frame2" },
-      h("div", { class: "pg-frame2-head" }, h("span", {}, `${brand} · ${mode}`)),
-      h("div", { class: "pg-frame2-body pv", "data-brand": brand, "data-mode": mode }, dim.inspectView()));
+      h("div", { class: "pg-frame2-head" },
+        h("span", {}, `${brand} · ${mode}${PG.activeClientAccent() ? ` · accent: ${PG.activeClientAccent()}` : ""}`)),
+      h("div", { class: "pg-frame2-body pv", "data-brand": brand, "data-mode": mode, "data-accent": PG.activeClientAccent() },
+        dim.inspectView()));
   }
 
   function renderStepNav() {
@@ -252,18 +265,30 @@ window.PG = window.PG || {};
     PG.$("stageContext").hidden = !isContext;
     PG.$("stageInspect").hidden = isContext;
     renderStageSwitch();
+    // Forces the reduced-motion path (the .motion-reduce class in motion.css) for checking it
+    // without changing OS settings — only while inspecting motion.
+    PG.$("stage").classList.toggle("motion-reduce", PG.shared.dimension === "motion" && PG.shared.reduceMotion);
     if (isContext) PG.renderFrames();
     else PG.$("stageInspect").replaceChildren(renderInspect(dim));
     applyFrameWidth();
   };
 
   function applyFrameWidth() {
-    PG.$("stageContext").style.maxWidth = PG.shared.fit ? "" : `${PG.shared.width}px`;
+    // Both stages take the slider's width, so Inspect views (e.g. layout's ruler) can
+    // be stepped through ranges too.
+    for (const id of ["stageContext", "stageInspect"]) {
+      PG.$(id).style.maxWidth = PG.shared.fit ? "" : `${PG.shared.width}px`;
+    }
     PG.$("width").value = PG.shared.width;
     PG.$("width").disabled = PG.shared.fit;
     PG.$("fit").checked = PG.shared.fit;
     PG.$("annotate").checked = PG.shared.annotate;
-    PG.$("widthOut").value = `${Math.round(PG.$("stageContext").getBoundingClientRect().width)}px`;
+    updateWidthOut();
+  }
+
+  function updateWidthOut() {
+    const stage = PG.$("stageContext").hidden ? PG.$("stageInspect") : PG.$("stageContext");
+    PG.$("widthOut").value = `${Math.round(stage.getBoundingClientRect().width)}px`;
   }
 
   // ---------- export ----------
@@ -337,7 +362,7 @@ window.PG = window.PG || {};
       if (dim.afterRestore) dim.afterRestore(dim.state, dim.defaults);
       dim.ui = {
         step: savedRaw.dimUi?.[key]?.step ?? 0,
-        stage: savedRaw.dimUi?.[key]?.stage ?? "context",
+        stage: savedRaw.dimUi?.[key]?.stage ?? dim.defaultStage ?? "context",
       };
       writeLiveTokens(key);
     }
@@ -348,6 +373,8 @@ window.PG = window.PG || {};
       width: savedRaw.shared?.width ?? 1100,
       fit: savedRaw.shared?.fit ?? true,
       annotate: savedRaw.shared?.annotate ?? false,
+      reduceMotion: savedRaw.shared?.reduceMotion ?? false,
+      clientAccent: savedRaw.shared?.clientAccent ?? null,
       framesPreset: savedRaw.shared?.framesPreset ?? "mixed",
       inspect: { brand: "portfolio", mode: "light", ...savedRaw.shared?.inspect },
       frames: savedRaw.shared?.frames
@@ -406,6 +433,11 @@ window.PG = window.PG || {};
       applyFrameWidth();
       persist();
     });
+    PG.$("reduceMotion").addEventListener("change", (e) => {
+      PG.shared.reduceMotion = e.target.checked;
+      PG.renderStage();
+      persist();
+    });
     PG.$("annotate").addEventListener("change", (e) => {
       PG.shared.annotate = e.target.checked;
       PG.renderStage();
@@ -441,9 +473,9 @@ window.PG = window.PG || {};
       PG.$("copy").textContent = "Copied";
     });
 
-    new ResizeObserver(() => {
-      PG.$("widthOut").value = `${Math.round(PG.$("stageContext").getBoundingClientRect().width)}px`;
-    }).observe(PG.$("stageContext"));
+    const widthObserver = new ResizeObserver(updateWidthOut);
+    widthObserver.observe(PG.$("stageContext"));
+    widthObserver.observe(PG.$("stageInspect"));
 
     // ---- initial render ----
     renderModeSwitch();

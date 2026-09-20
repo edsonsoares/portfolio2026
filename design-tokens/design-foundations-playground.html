@@ -12,10 +12,19 @@
 <script src="generate-spacing-css.js"></script>
 <script src="radius.config.js"></script>
 <script src="generate-radius-css.js"></script>
+<script>window.MOTION_MANUAL = true;</script>
+<script src="motion.config.js"></script>
+<script src="generate-motion-css.js"></script>
+<script src="motion.js"></script>
+<script src="layout.config.js"></script>
+<script src="generate-layout-css.js"></script>
 <style id="typographyTokens"></style>
 <style id="colorTokens"></style>
 <style id="spacingTokens"></style>
 <style id="radiusTokens"></style>
+<style id="layoutTokens"></style>
+<style id="motionTokens"></style>
+<link rel="stylesheet" href="templates/case-study.css">
 <style>
   /* ---------- Playground chrome (deliberately independent of the tokens) ---------- */
   * { box-sizing: border-box; }
@@ -148,6 +157,8 @@
   /* ---------- Preview content — typography, spacing and radius tokens apply here
      directly and unconditionally, regardless of which dimension is being edited. ---------- */
   .pv { padding: clamp(20px, 5cqi, 56px); }
+  /* Scenes that lay themselves out with the l-* primitives bring their own margins. */
+  .pv.pv-flush { padding: 0; }
   .pv * { margin: 0; }
   [contenteditable] { outline: none; }
   [contenteditable]:focus { box-shadow: 0 0 0 2px var(--pv-accent); border-radius: 2px; }
@@ -273,6 +284,74 @@
     padding: 1px 5px; border-radius: 3px; pointer-events: none;
     white-space: nowrap;
   }
+
+  /* ---------- Motion dimension ---------- */
+  .pg-mtoolbar { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
+  .pg-mrow { display: grid; grid-template-columns: minmax(150px, 220px) 1fr auto; gap: 16px; align-items: center; padding: 8px 0; }
+  .pg-mdemo { height: var(--space-8, 8px); background: var(--pv-soft); border-radius: 999px; overflow: hidden; }
+  .pg-mdemo-fill { height: 100%; background: var(--pv-accent); transform: scaleX(1); transform-origin: left; transition: transform var(--d) var(--e); }
+  .pg-mdemo.is-reset .pg-mdemo-fill { transform: scaleX(0); transition: none; }
+  .pg-mcard { background: var(--pv-soft); border: 1px solid var(--pv-line); border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+  .pg-mgroup { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 8px; grid-column: 1 / span 1; }
+  .pg-mrow > .pg-mgroup, .pg-mrow > .pg-mcard { grid-column: 1 / span 2; }
+  /* Reduced motion: demos jump to their end state, like the real .reveal. */
+  .motion-reduce .pg-mdemo .pg-mdemo-fill, .motion-reduce .pg-mdemo.is-reset .pg-mdemo-fill { transform: scaleX(1); transition: none; }
+  @media (prefers-reduced-motion: reduce) { .pg-mdemo .pg-mdemo-fill, .pg-mdemo.is-reset .pg-mdemo-fill { transform: scaleX(1); transition: none; } }
+
+  /* ---------- Layout dimension ---------- */
+  #stageInspect { margin: 0 auto; width: 100%; }
+  .pg-lbox {
+    background: var(--pv-soft); border: 1px solid var(--pv-line); border-radius: 4px;
+    padding: 8px 10px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--pv-fg);
+  }
+  .pg-lgallery { padding: 16px 0; border-top: 1px solid var(--pv-line); }
+  .pg-lgallery-head { display: flex; gap: 10px; align-items: baseline; font-weight: 600; }
+  .pg-lgallery-head code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--pv-accent); }
+  .pg-lgallery-desc { margin: 4px 0 12px; font-size: 12px; color: var(--pv-muted); max-width: 70ch; }
+  .pg-lgallery-demo { min-width: 0; }
+  .pg-ruler { position: relative; height: 44px; margin-top: 22px; border: 1px solid var(--pv-line); border-radius: 6px; }
+  .pg-ruler-seg {
+    position: absolute; top: 0; bottom: 0; box-sizing: border-box; padding: 4px 6px; overflow: hidden;
+    border-left: 1px solid var(--pv-line); font-size: 11px; line-height: 1.3; color: var(--pv-muted);
+  }
+  .pg-ruler-seg:first-child { border-left: 0; }
+  .pg-ruler-seg strong { display: block; color: var(--pv-fg); }
+  .pg-ruler-seg.pg-ruler-active { background: var(--pv-soft); }
+  .pg-ruler-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--pv-accent); transform: translateX(-1px); }
+  .pg-ruler-marker span {
+    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); white-space: nowrap;
+    font: 10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 1px 5px; border-radius: 3px;
+    background: var(--pv-accent); color: var(--pv-bg);
+  }
+  .pg-ruler-marker.pg-ruler-over span { transform: translateX(-100%); }
+  .pg-layout-annotated { position: relative; }
+  /* The overlay is a .l-center breakout grid: columns in the content track, a sample
+     .l-bleed strip across the full span. */
+  .pg-layout-overlay {
+    position: absolute; inset: 0; z-index: 4; pointer-events: none;
+    grid-template-rows: 1fr auto; padding-bottom: 14px; row-gap: 8px;
+  }
+  .pg-layout-cols {
+    grid-row: 1; display: grid; grid-template-columns: repeat(var(--layout-columns), minmax(0, 1fr));
+    column-gap: var(--layout-gutter);
+    /* The gutters show this tint; each column adds a second one on top. */
+    background: rgba(0, 110, 255, 0.16); outline: 1px dashed rgba(0, 110, 255, 0.7); outline-offset: 0;
+  }
+  .pg-layout-cols > div {
+    background: rgba(255, 60, 90, 0.14); border-inline: 1px solid rgba(255, 60, 90, 0.4);
+    font: 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: rgba(255, 60, 90, 0.9); padding: 4px 0 0 3px;
+  }
+  .pg-layout-bleed {
+    grid-row: 2; display: flex; align-items: center; padding: 4px var(--layout-margin);
+    font: 10px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; color: rgb(140, 80, 0);
+    background: repeating-linear-gradient(135deg, rgba(255, 170, 0, 0.35) 0 8px, rgba(255, 170, 0, 0.15) 8px 16px);
+    border-block: 1px solid rgba(255, 150, 0, 0.9);
+  }
+  .pg-layout-readout {
+    position: absolute; top: 6px; right: 8px; z-index: 6; pointer-events: none;
+    font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 2px 8px; border-radius: 4px;
+    background: var(--pv-accent); color: var(--pv-bg);
+  }
 </style>
 </head>
 <body>
@@ -285,6 +364,8 @@
         <button data-dim="color">Color</button>
         <button data-dim="spacing">Spacing</button>
         <button data-dim="radius">Radius</button>
+        <button data-dim="layout">Layout</button>
+        <button data-dim="motion">Motion</button>
       </div>
       <nav class="pg-stepnav" id="stepnav" aria-label="Steps"></nav>
     </header>
@@ -325,6 +406,7 @@
       </label>
       <label><input type="checkbox" id="fit"> Fit</label>
       <label id="annotateLabel"><input type="checkbox" id="annotate"> Annotate</label>
+      <label id="reduceMotionLabel" hidden><input type="checkbox" id="reduceMotion"> Simulate reduced motion</label>
     </div>
     <div class="pg-stage" id="stage">
       <div class="pg-frames-outer" id="stageContext">
@@ -348,6 +430,7 @@
   </div>
 </dialog>
 
+<script src="templates/case-study.markup.js"></script>
 <script src="playground/shell.js"></script>
 <script src="playground/scenes.js"></script>
 <script src="playground/frames.js"></script>
@@ -355,6 +438,8 @@
 <script src="playground/dim-color.js"></script>
 <script src="playground/dim-spacing.js"></script>
 <script src="playground/dim-radius.js"></script>
+<script src="playground/dim-layout.js"></script>
+<script src="playground/dim-motion.js"></script>
 <script>
   PG.boot();
 </script>
