@@ -1,0 +1,75 @@
+/* Motion tokens. Generated from motion.config.js — do not edit by hand. */
+
+:root {
+  /* Durations */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --duration-reveal: 500ms;
+
+  /* Easings */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Entrance (per-brand values below) */
+  --motion-stagger: 60ms;
+  --motion-stagger-max: 6; /* reference: siblings past this share the last delay */
+  --motion-threshold: 0.15; /* read by motion.js: fraction of the element visible before it reveals */
+}
+
+:root, [data-brand="portfolio"] {
+  /* portfolio: rise + fade */
+  --motion-rise: 1rem;
+  --motion-reveal-duration: var(--duration-reveal);
+}
+
+[data-brand="feelscience"] {
+  /* feelscience: fade only */
+  --motion-rise: 0rem;
+  --motion-reveal-duration: 300ms;
+}
+
+/* ---------- Reveal ----------
+   .reveal starts hidden and .is-revealed (added once by motion.js) animates it in. Only
+   opacity and transform are transitioned, so revealing never moves or resizes anything.
+   The hidden state applies only where scripting is enabled, so content is never stranded
+   invisible when JS can't run. .reveal-instant (elements already on screen at load) skips
+   the transition. */
+@media (scripting: enabled) {
+  .reveal { opacity: 0; transform: translateY(var(--motion-rise)); }
+}
+.reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity var(--motion-reveal-duration) var(--ease-out),
+    transform var(--motion-reveal-duration) var(--ease-out);
+}
+.reveal.reveal-instant { transition: none; }
+
+/* Staggered children of a .reveal-group. The delay applies only to the revealed (entering) state,
+   so hiding an element again is never delayed. The first child has no delay; each sibling after it
+   waits one more --motion-stagger, up to 6 siblings — later ones share the last delay. */
+.reveal-group > .reveal.is-revealed:nth-child(2) { transition-delay: calc(1 * var(--motion-stagger)); }
+.reveal-group > .reveal.is-revealed:nth-child(3) { transition-delay: calc(2 * var(--motion-stagger)); }
+.reveal-group > .reveal.is-revealed:nth-child(4) { transition-delay: calc(3 * var(--motion-stagger)); }
+.reveal-group > .reveal.is-revealed:nth-child(5) { transition-delay: calc(4 * var(--motion-stagger)); }
+.reveal-group > .reveal.is-revealed:nth-child(6) { transition-delay: calc(5 * var(--motion-stagger)); }
+.reveal-group > .reveal.is-revealed:nth-child(n + 7) { transition-delay: calc(5 * var(--motion-stagger)); }
+
+/* Reduced motion: no transforms, no transitions — everything appears in its final state at once. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .reveal.is-revealed {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* The same, forced by class (.motion-reduce on any ancestor) — for testing the accessible path
+   without changing OS settings. */
+.motion-reduce .reveal, .motion-reduce .reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
