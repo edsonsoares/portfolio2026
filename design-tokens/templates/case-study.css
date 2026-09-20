@@ -1,0 +1,109 @@
+/*
+ * Case study template styles. Every value is a token (var(--…)) from typography.css,
+ * color.css, spacing.css, radius.css or layout.css — nothing is hard-coded here. Layout
+ * comes from the l-* primitives; this file only adds color, radius and spacing roles.
+ */
+
+/* Page: the .l-center breakout grid, with the section gap between its direct children.
+   --stack-space is inherited, so every block resets it for its own inner layout. */
+.cs-page {
+  --stack-space: var(--space-section-gap);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  padding-block: var(--space-section-gap);
+}
+.cs-block { --stack-space: var(--space-stack); }
+/* A story is a .l-breakout: its row gap separates the title/text, quote and media. */
+.cs-story { --stack-space: var(--space-stack-loose); }
+.cs-tight { --stack-space: var(--space-stack-tight); }
+.cs-loose { --stack-space: var(--space-stack-loose); }
+
+.cs-muted { color: var(--color-text-secondary); }
+.cs-eyebrow { color: var(--color-accent-text); }
+
+/* Client accent marker: a fill from the per-page accent override. */
+.cs-accent-bar {
+  background: var(--color-accent);
+  block-size: var(--space-8);
+  inline-size: var(--space-64);
+  border-radius: var(--radius-pill);
+}
+
+/* Gray placeholder for media. */
+.cs-ph {
+  display: grid;
+  place-items: center;
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-media);
+}
+.l-bleed .cs-ph, .cs-media--bleed .cs-ph { border-radius: var(--radius-0); }
+.cs-fig { margin: 0; }
+.cs-fig figcaption {
+  color: var(--color-text-secondary);
+  padding-block-start: var(--space-stack-tight);
+}
+.cs-media > figcaption { padding-block-start: var(--space-stack-tight); }
+
+/* Metadata pairs (header Client / Year, Overview Role / Services / Year cards). Within a pair the label
+   sits close to its value (--space-4); pairs are separated by the larger --space-stack, so the grouping
+   is clear. Both blocks share the same pair rule. */
+.cs-meta { --stack-space: var(--space-stack); margin: 0; }
+.cs-meta > div, .cs-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.cs-meta dt, .cs-card dt { color: var(--color-text-secondary); }
+.cs-meta dd, .cs-card dd { margin: 0; }
+
+/* Overview cards */
+.cs-cards { margin: 0; }
+.cs-card {
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-card);
+  padding: var(--space-card-padding);
+}
+
+/* Statistics */
+.cs-stat { --stack-space: var(--space-stack-tight); }
+.cs-stat-number { color: var(--color-accent-text); }
+.cs-prose { max-inline-size: var(--measure); margin: 0; }
+.cs-heading { margin: 0; }
+
+/* Pull quote: a block inside the content column, so it aligns with the text above it. */
+.cs-quote {
+  margin: 0;
+  background: var(--color-accent-subtle);
+  border-radius: var(--radius-surface);
+  padding: var(--space-card-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-stack);
+}
+.cs-quote p, .cs-quote footer { margin: 0; }
+.cs-quote footer { color: var(--color-text-secondary); }
+
+/* Next case study: navigation, not a section. The block is full width (.l-breakout) with a hairline
+   across its top and extra space above it; that space is added to the page's section gap, so the
+   distance from the last story is about double. The only literal is the 1px hairline width — there is
+   no border-width token. */
+.cs-next { color: var(--color-text-primary); text-decoration: none; align-items: center; }
+.cs-next:focus-visible { outline: var(--space-2) solid var(--color-focus-ring); outline-offset: var(--space-2); }
+
+/* The whole full-bleed block is the hit area and takes the hover tint — only its background colour
+   changes, nothing moves. The link's ::after is stretched over the block (the nearest positioned
+   ancestor), so the markup stays a single link with one accessible name. Keyboard focus gets the same
+   tint as hover, in addition to the outline above. */
+.cs-next-block {
+  position: relative;
+  margin-block-start: var(--space-section-gap);
+  padding-block: var(--space-stack-loose);
+  border-block-start: 1px solid var(--color-border-subtle);
+  transition: background-color var(--duration-base) var(--ease-in-out);
+}
+.cs-next-block:hover,
+.cs-next-block:has(.cs-next:focus-visible) { background-color: var(--color-accent-subtle); }
+.cs-next::after { content: ""; position: absolute; inset: 0; }
+@media (prefers-reduced-motion: reduce) { .cs-next-block { transition: none; } }
+.motion-reduce .cs-next-block { transition: none; }

@@ -78,8 +78,20 @@
           editable("text-body-sm", "Changes saved successfully."))));
   }
 
+  // Case study: markup shared with templates/case-study.html (case-study.markup.js). The
+  // page's own data-accent is the per-page client override; a client accent picked in the
+  // Color section takes its place.
+  function caseStudyScene() {
+    const t = document.createElement("template");
+    t.innerHTML = CASE_STUDY_MARKUP;
+    const page = t.content.firstElementChild;
+    page.setAttribute("data-accent", PG.activeClientAccent() || page.getAttribute("data-accent"));
+    return page;
+  }
+
   PG.registerScene({ id: "hero", label: "Hero", render: heroScene });
   PG.registerScene({ id: "article", label: "Article", render: articleScene });
   PG.registerScene({ id: "cards", label: "Cards", render: cardsScene });
   PG.registerScene({ id: "controls", label: "Controls", render: controlsScene });
+  PG.registerScene({ id: "case-study", label: "Case study", render: caseStudyScene, flush: true });
 })(window.PG);

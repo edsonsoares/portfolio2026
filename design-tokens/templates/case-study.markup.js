@@ -1,0 +1,171 @@
+/*
+ * Case study template markup — the single source for both templates/case-study.html
+ * (written by build.js) and the playground's "Case study" scene (scenes.js). Built only
+ * from the l-* layout primitives, the text-* type roles and templates/case-study.css.
+ * All text and media are placeholders.
+ *
+ * The page root is a .l-center breakout grid, so its direct children are either contained
+ * (content track) or .l-bleed (full width). data-space / data-color-role / data-radius-role
+ * feed the playground's annotate overlays.
+ */
+const CASE_STUDY_MARKUP = `
+<main class="l-center cs-page" data-accent="aesop" data-space="section-gap">
+
+  <!-- 1. Client header: title spans 8 (cols 1–8); meta spans 3, offset 9 (cols 10–12). The header meta holds
+       facts about the project and client (Client, Year, Segment); the Overview cards below hold facts about
+       the designer's contribution (Role, Services, Team) — one kind of fact per row. -->
+  <header class="l-columns cs-block">
+    <div class="l-stack cs-tight l-span-4 l-span-md-8" data-space="stack-tight">
+      <span class="cs-accent-bar" data-color-role="accent"></span>
+      <p class="text-label cs-eyebrow" data-color-role="accent-text">Case study · Client name</p>
+      <h1 class="text-display cs-heading">Placeholder title for a client project</h1>
+    </div>
+    <dl class="l-stack cs-meta l-span-4 l-span-md-3 l-offset-md-9" data-space="stack">
+      <div><dt class="text-label">Client</dt><dd class="text-body">Client name</dd></div>
+      <div><dt class="text-label">Year</dt><dd class="text-body">2026</dd></div>
+      <div><dt class="text-label">Segment</dt><dd class="text-body">Placeholder market or audience</dd></div>
+    </dl>
+  </header>
+
+  <!-- 2. Hero media: full bleed, aspect ratio from .l-frame -->
+  <figure class="l-bleed cs-fig">
+    <div class="l-frame cs-ph" data-radius-role="media"><span class="text-caption">Hero media</span></div>
+  </figure>
+
+  <!-- Motion: every block below carries .reveal (fades in once as it scrolls into view — see
+       motion.css / motion.js). The client header and hero deliberately don't: they're the first
+       read and must never wait. -->
+
+  <!-- Every section below uses one two-column pattern — .l-section: a title on the left and the
+       content on the right — defined once in layout.config.js (sectionPattern). Change the
+       rhythm there. Below md everything stacks full width. -->
+
+  <!-- 3. Overview: prose + Role / Services / Year cards. The cards are an .l-section-row: a subgrid
+       aligned to the page columns (three equal columns where subgrid isn't supported). -->
+  <section class="l-section cs-block reveal" data-space="stack">
+    <h2 class="l-section-title text-heading-md cs-heading">Overview</h2>
+    <div class="l-section-body">
+      <p class="text-prose cs-prose">Placeholder prose for the project overview. It sits in the wider column beside its title, capped at the reading measure so lines stay comfortable at any width.</p>
+      <p class="text-prose cs-prose">A second paragraph shows the paragraph rhythm. Replace this with the real summary of the problem, the approach and the outcome.</p>
+      <dl class="l-section-row cs-cards" data-space="stack">
+        <div class="cs-card l-span-4 l-span-md-2" data-radius-role="card"><dt class="text-label">Role</dt><dd class="text-body">Placeholder role</dd></div>
+        <div class="cs-card l-span-4 l-span-md-2" data-radius-role="card"><dt class="text-label">Services</dt><dd class="text-body">Placeholder services</dd></div>
+        <div class="cs-card l-span-4 l-span-md-2" data-radius-role="card"><dt class="text-label">Team</dt><dd class="text-body">Design lead, with 2 engineers</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 4. Results: the statistics row, then the outcome prose, in one content column -->
+  <section class="l-section cs-block reveal" data-space="stack">
+    <h2 class="l-section-title text-heading-md cs-heading">Results</h2>
+    <div class="l-section-body">
+      <div class="l-section-row">
+        <div class="l-stack cs-stat l-span-4 l-span-md-2"><span class="text-display-editorial cs-stat-number" data-color-role="accent-text">00%</span><span class="text-caption cs-muted">Placeholder statistic</span></div>
+        <div class="l-stack cs-stat l-span-4 l-span-md-2 l-offset-md-3"><span class="text-display-editorial cs-stat-number" data-color-role="accent-text">0.0×</span><span class="text-caption cs-muted">Placeholder statistic</span></div>
+        <div class="l-stack cs-stat l-span-4 l-span-md-2 l-offset-md-6"><span class="text-display-editorial cs-stat-number" data-color-role="accent-text">000</span><span class="text-caption cs-muted">Placeholder statistic</span></div>
+      </div>
+      <p class="text-prose cs-prose">Placeholder prose for the outcome, following the numbers it explains. It shares the content column with the statistics above.</p>
+    </div>
+  </section>
+
+  <!-- 5. Approach: title left; prose and inline media right -->
+  <section class="l-section cs-block reveal" data-space="stack">
+    <h2 class="l-section-title text-heading-md cs-heading">Approach</h2>
+    <div class="l-section-body">
+      <p class="text-prose cs-prose">Placeholder prose for the approach. The title stays at the top of its column while this text and the media below run alongside it.</p>
+      <p class="text-prose cs-prose">Keep adding paragraphs; they follow the stack rhythm.</p>
+      <figure class="cs-fig">
+        <div class="l-frame cs-ph" data-radius-role="media"><span class="text-caption">Inline media</span></div>
+        <figcaption class="text-caption">Placeholder caption.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- STORY SECTIONS 6–8. Each is a self-contained .l-breakout: the same anatomy — title on the
+       left, a short paragraph on the right, then a media block — differing only in the media block's
+       modifier. A .l-breakout is needed because --bleed must escape to the full width while the
+       title and text stay in place above it.
+
+       Media block: <figure class="cs-media reveal cs-media--VARIANT"> with a .cs-media-items row and ONE
+       figcaption. Pick the variant per story (any story can use any):
+         --single       one image filling the content column   (one .l-frame in the row)
+         --duo          two equal images side by side           (two frames)
+         --asymmetric   two images, roughly 1/3 + 2/3           (two frames)
+         --trio         three smaller images in a row           (three frames)
+         --bleed        one full-width image; the caption stays in the content column (one frame)
+       Below md every variant stacks full width. Placements live in layout.config.js (mediaBlocks). -->
+
+  <!-- 6. Story 1 — bleed -->
+  <div class="l-breakout cs-story" data-space="stack-loose">
+    <section class="l-section cs-block reveal" data-space="stack">
+      <h2 class="l-section-title text-heading-md cs-heading">Challenge</h2>
+      <div class="l-section-body">
+        <p class="text-prose cs-prose">A short placeholder paragraph introducing the first story. The image below breaks out to the full width while this title and text stay in place.</p>
+      </div>
+    </section>
+    <figure class="cs-media reveal cs-media--bleed">
+      <div class="cs-media-items"><div class="l-frame cs-ph" data-radius-role="media"><span class="text-caption">Bleed</span></div></div>
+      <figcaption class="text-caption cs-muted">Placeholder caption, aligned to the content column.</figcaption>
+    </figure>
+  </div>
+
+  <!-- 7. Story 2 — duo, with the pull quote between the paragraph and the media -->
+  <div class="l-breakout cs-story" data-space="stack-loose">
+    <section class="l-section cs-block reveal" data-space="stack">
+      <h2 class="l-section-title text-heading-md cs-heading">Direction</h2>
+      <div class="l-section-body">
+        <p class="text-prose cs-prose">A short placeholder paragraph introducing the second story, leading into the quote that follows.</p>
+      </div>
+    </section>
+    <section class="l-section cs-block reveal">
+      <div class="l-section-body">
+        <blockquote class="cs-quote" data-radius-role="surface" data-color-role="accent-subtle">
+          <p class="text-display-editorial">“A placeholder pull quote, set large in the editorial display role.”</p>
+          <footer class="text-caption">— Placeholder name, role</footer>
+        </blockquote>
+      </div>
+    </section>
+    <figure class="cs-media reveal cs-media--duo">
+      <div class="cs-media-items">
+        <div class="l-frame cs-ph" data-radius-role="media"><span class="text-caption">Duo, left</span></div>
+        <div class="l-frame cs-ph" data-radius-role="media"><span class="text-caption">Duo, right</span></div>
+      </div>
+      <figcaption class="text-caption cs-muted">Placeholder caption for the pair.</figcaption>
+    </figure>
+  </div>
+
+  <!-- 8. Story 3 — asymmetric -->
+  <div class="l-breakout cs-story" data-space="stack-loose">
+    <section class="l-section cs-block reveal" data-space="stack">
+      <h2 class="l-section-title text-heading-md cs-heading">Delivery</h2>
+      <div class="l-section-body">
+        <p class="text-prose cs-prose">A short placeholder paragraph introducing the third story, followed by two images at unequal widths.</p>
+      </div>
+    </section>
+    <figure class="cs-media reveal cs-media--asymmetric">
+      <div class="cs-media-items">
+        <div class="l-frame cs-ph" data-radius-role="media"><span class="text-caption">Narrow</span></div>
+        <div class="l-frame cs-ph" data-radius-role="media"><span class="text-caption">Wide</span></div>
+      </div>
+      <figcaption class="text-caption cs-muted">Placeholder caption for the pair.</figcaption>
+    </figure>
+  </div>
+
+  <!-- 9. Next case study — navigation, not another section: no title and no section pattern. A <nav>
+       landmark, set off from the story above by a full-bleed hairline and extra space (see .cs-next-block in
+       case-study.css). One link: the <a> wraps the eyebrow and title, and its ::after is stretched over the
+       whole full-bleed block so the entire area is clickable, tinted on hover and on keyboard focus. The
+       thumbnail is decorative (aria-hidden), so the link's accessible name is just its text. -->
+  <nav class="l-breakout cs-block cs-next-block" aria-label="Case study navigation">
+    <a class="l-columns cs-next" href="#">
+      <div class="l-stack cs-tight l-span-4 l-span-md-8">
+        <span class="text-label cs-eyebrow">Next case study</span>
+        <span class="text-heading-lg cs-next-title">Placeholder next project →</span>
+      </div>
+      <div class="l-frame cs-ph l-span-4 l-span-md-4" data-radius-role="media" aria-hidden="true"><span class="text-caption">Thumbnail</span></div>
+    </a>
+  </nav>
+</main>
+`;
+
+if (typeof module !== "undefined") module.exports = CASE_STUDY_MARKUP;

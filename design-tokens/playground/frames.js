@@ -24,7 +24,7 @@
 
   function frameHead(frame, frames) {
     return h("div", { class: "pg-frame2-head" },
-      h("span", {}, `${frame.brand} · ${frame.mode}`),
+      h("span", {}, `${frame.brand} · ${frame.mode}${PG.activeClientAccent() ? ` · accent: ${PG.activeClientAccent()}` : ""}`),
       h("button", {
         class: "pg-btn",
         onclick: () => {
@@ -54,7 +54,7 @@
     const container = h("div", { class: `pg-frames${frames.length === 1 ? " pg-frames-single" : ""}` },
       ...frames.map((frame) => {
         const body = h("div",
-          { class: "pg-frame2-body pv", "data-brand": frame.brand, "data-mode": frame.mode },
+          { class: `pg-frame2-body pv${scene.flush ? " pv-flush" : ""}`, "data-brand": frame.brand, "data-mode": frame.mode, "data-accent": PG.activeClientAccent() },
           scene.render());
         return h("div", { class: "pg-frame2" }, frameHead(frame, frames), body);
       }));
@@ -64,5 +64,8 @@
     }
 
     PG.$("frames").replaceChildren(container);
+    // Scenes carry .reveal (the case study): show them in their final state, never hidden
+    // waiting on a scroll trigger, so editing tokens doesn't blank the preview.
+    if (window.Motion) Motion.revealAll(container);
   };
 })(window.PG);
