@@ -141,9 +141,9 @@
 
   /* prose */
   --text-prose-font-family: var(--font-family-serif);
-  --text-prose-font-size: var(--font-size-0);
+  --text-prose-font-size: var(--font-size-1);
   --text-prose-font-weight: 400;
-  --text-prose-line-height: 1.65;
+  --text-prose-line-height: 1.6;
   --text-prose-letter-spacing: 0;
   --text-prose-text-transform: none;
 

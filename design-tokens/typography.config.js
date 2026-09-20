@@ -63,7 +63,7 @@ const TYPE_CONFIG = {
     "heading-sm": { font: "sans", step: 1,  weight: 700, lineHeight: 1.3,  tracking: 0,     transform: "none" },
     "body-lg":    { font: "sans", step: 1,  weight: 400, lineHeight: 1.5,  tracking: 0,     transform: "none" },
     body:         { font: "sans", step: 0,  weight: 400, lineHeight: 1.6,  tracking: 0,     transform: "none" },
-    prose:        { font: "serif", step: 0, weight: 400, lineHeight: 1.65, tracking: 0,     transform: "none" },
+    prose:        { font: "serif", step: 1, weight: 400, lineHeight: 1.6,  tracking: 0,     transform: "none" },
     "body-sm":    { font: "sans", step: -1, weight: 400, lineHeight: 1.5,  tracking: 0,     transform: "none" },
     caption:      { font: "sans", step: -1, weight: 400, lineHeight: 1.4,  tracking: 0.01,  transform: "none" },
     label:        { font: "sans", step: -1, weight: 700, lineHeight: 1.2,  tracking: 0.06,  transform: "uppercase" },
